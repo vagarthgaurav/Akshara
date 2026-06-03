@@ -20,3 +20,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Compiled test binaries
+runtime/test/test_*
+!runtime/test/test_*.c
