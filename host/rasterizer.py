@@ -24,7 +24,7 @@ from pathlib import Path
 import freetype
 
 from cluster_enum import Cluster, ScriptConfig, from_module
-from shaper import GlyphInfo, ShapedCluster, shape_all
+from shaper import ShapedCluster, shape_all
 
 # FreeType load flags: RENDER produces a bitmap in the glyph slot.
 # TARGET_MONO requests hinted 1bpp monochrome rendering (bitmap.pixel_mode = 1).
