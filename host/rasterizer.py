@@ -41,8 +41,9 @@ _FT_PIXEL_MODE_GRAY = freetype.FT_PIXEL_MODES["FT_PIXEL_MODE_GRAY"]
 class RasterizedCluster:
     bitmap: bytes   # packed 1bpp or 2bpp, rows byte-aligned, MSB-first
     width: int      # bitmap width in pixels
-    height: int     # bitmap height in pixels
+    height: int     # bitmap height in pixels (content only, not full glyph box)
     bearing_x: int  # signed: pen x → left edge of bitmap (can be negative)
+    bearing_y: int  # rows from content-top to baseline (positive = baseline below content-top)
     advance: int    # total horizontal advance in pixels
 
 
@@ -169,11 +170,15 @@ class Rasterizer:
 
         total_advance = sum(g.x_advance for g in shaped)
         bitmap = _pack_canvas(canvas, canvas_w, canvas_h, self._bpp)
+        # Baseline is at screen y=0; content top is at screen y=min_y.
+        # bearing_y = rows from content top down to baseline in the content bitmap.
+        bearing_y = int(-min_y)
         return RasterizedCluster(
             bitmap=bitmap,
             width=canvas_w,
             height=canvas_h,
             bearing_x=int(min_x),
+            bearing_y=bearing_y,
             advance=total_advance,
         )
 

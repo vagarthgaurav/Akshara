@@ -46,18 +46,23 @@ class ScriptConfig:
     script_id: int
     independent_vowels: tuple[int, ...]
     consonants: tuple[int, ...]
+    consonant_range: tuple[int, int]   # (start, end) for aks_rule_table_t
     virama: int
     vowel_signs: tuple[int, ...]
+    vowel_sign_range: tuple[int, int]  # coarse range for segmenter rule table
     modifiers: tuple[int, ...]
+    modifier_range: tuple[int, int]    # (start, end) for aks_rule_table_t
     max_conjunct_depth: int
     common_consonants: tuple[int, ...]
+    digits: tuple[int, ...] = ()       # script-native digit codepoints (optional)
 
 
 def from_module(mod: ModuleType) -> ScriptConfig:
     """Build a ScriptConfig from a script constants module (e.g. scripts.kannada)."""
     required = (
-        "SCRIPT_ID", "INDEPENDENT_VOWELS", "CONSONANTS", "VIRAMA",
-        "VOWEL_SIGNS", "MODIFIERS", "MAX_CONJUNCT_DEPTH", "COMMON_CONSONANTS",
+        "SCRIPT_ID", "INDEPENDENT_VOWELS", "CONSONANTS", "CONSONANT_RANGE",
+        "VIRAMA", "VOWEL_SIGNS", "VOWEL_SIGN_RANGE", "MODIFIERS", "MODIFIER_RANGE",
+        "MAX_CONJUNCT_DEPTH", "COMMON_CONSONANTS",
     )
     missing = [attr for attr in required if not hasattr(mod, attr)]
     if missing:
@@ -67,11 +72,15 @@ def from_module(mod: ModuleType) -> ScriptConfig:
         script_id=mod.SCRIPT_ID,
         independent_vowels=tuple(mod.INDEPENDENT_VOWELS),
         consonants=tuple(mod.CONSONANTS),
+        consonant_range=tuple(mod.CONSONANT_RANGE),  # type: ignore[arg-type]
         virama=mod.VIRAMA,
         vowel_signs=tuple(mod.VOWEL_SIGNS),
+        vowel_sign_range=tuple(mod.VOWEL_SIGN_RANGE),  # type: ignore[arg-type]
         modifiers=tuple(mod.MODIFIERS),
+        modifier_range=tuple(mod.MODIFIER_RANGE),  # type: ignore[arg-type]
         max_conjunct_depth=mod.MAX_CONJUNCT_DEPTH,
         common_consonants=tuple(mod.COMMON_CONSONANTS),
+        digits=tuple(getattr(mod, "DIGITS", [])),
     )
 
 
@@ -93,7 +102,12 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
     for v in cfg.independent_vowels:
         add((v,))
 
-    # 2. Simple consonant clusters.
+    # 2. Standalone virama — needed for OOV fallback of unrecognised conjuncts.
+    #    When a conjunct is missing from the .aks, the fallback renders each
+    #    codepoint individually: consonant + virama glyph + consonant.
+    add((cfg.virama,))
+
+    # 3. Simple consonant clusters.
     for c in cfg.consonants:
         add((c,))                 # bare consonant
         add((c, cfg.virama))      # explicit halant / half-form
@@ -103,8 +117,10 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
 
         for vs in cfg.vowel_signs:
             add((c, vs))
+            for m in cfg.modifiers:
+                add((c, vs, m))   # consonant + vowel_sign + modifier (e.g. ಬೆಂ)
 
-    # 3. Depth-1 conjuncts: C1 + virama + C2 [+ vowel_sign | + modifier].
+    # 4. Depth-1 conjuncts: C1 + virama + C2 [+ vowel_sign | + modifier].
     #
     #    Frequency filter: BOTH consonants must be in COMMON_CONSONANTS.
     #    "Either common" would admit too many near-zero-occurrence pairs and
@@ -129,8 +145,10 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
     # _KEY_MAX_CP and cannot be stored as key entries. The MCU segmenter still
     # absorbs them per max_conjunct_depth, then takes the OOV fallback path.
 
-    # 4. Digits U+0030–U+0039 and common ASCII punctuation.
-    for cp in range(0x0030, 0x003A):
+    # 5. Digits and common ASCII punctuation.
+    for cp in range(0x0030, 0x003A):   # ASCII 0–9
+        add((cp,))
+    for cp in cfg.digits:              # script-native digits (e.g. Kannada ೦–೯)
         add((cp,))
     for cp in _ASCII_PUNCTUATION:
         add((cp,))

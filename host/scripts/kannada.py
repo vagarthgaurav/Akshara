@@ -43,11 +43,14 @@ MODIFIERS: list[int] = [
     0x0C83,  # KANNADA SIGN VISARGA  (ಃ)
 ]
 
-# Top consonants by corpus frequency; used to filter conjunct pairs.
+# High-frequency consonants eligible for conjunct enumeration.
 # Both consonants in a pair must appear here for the conjunct to be enumerated.
-# Derived from Kannada Wikipedia / CIIL corpus analysis. Rare consonants
-# ಘ(98) ಙ(99) ಝ(9D) ಞ(9E) ಱ(B1) are intentionally excluded.
+# Tier 1: ರ ದ ತ ಕ ಗ ನ ಮ — most frequent by corpus analysis.
+# Tier 2: ಪ ಸ ಲ ಬ ವ ಹ ಯ — next most frequent; covers ಪ್ರ, ಸ್ಕ, ಲ್ಲ, ಬ್ಬ, ವ್ಯ, ಹ್ರ, ಕ್ಯ.
+# Tier 3: ಷ ಶ ಣ ಧ — covers ಕ್ಷ (ಅಕ್ಷರ, ದಕ್ಷ), ರ್ಶ (ದರ್ಶನ), ಣ and ಧ conjuncts.
+# Rare ಘ ಙ ಝ ಱ excluded.
 COMMON_CONSONANTS: list[int] = [
+    # Tier 1
     0x0CB0,  # ರ RA
     0x0CA6,  # ದ DA
     0x0CA4,  # ತ TA
@@ -55,4 +58,23 @@ COMMON_CONSONANTS: list[int] = [
     0x0C97,  # ಗ GA
     0x0CA8,  # ನ NA
     0x0CAE,  # ಮ MA
+    # Tier 2
+    0x0CAA,  # ಪ PA
+    0x0CB8,  # ಸ SA
+    0x0CB2,  # ಲ LA
+    0x0CB3,  # ಳ LLA
+    0x0CAC,  # ಬ BA
+    0x0CB5,  # ವ VA
+    0x0CB9,  # ಹ HA
+    0x0CAF,  # ಯ YA
+    0x0C9C,  # ಜ JA  
+    0x0C9E,  # ಞ NYA 
+    # Tier 3
+    0x0CB7,  # ಷ SSA
+    0x0CB6,  # ಶ SHA
+    0x0CA3,  # ಣ NNA
+    0x0CA7,  # ಧ DHA
 ]
+
+# Script-native digits: U+0CE6 ೦ … U+0CEF ೯ (KANNADA DIGIT ZERO..NINE)
+DIGITS: list[int] = list(range(0x0CE6, 0x0CF0))
