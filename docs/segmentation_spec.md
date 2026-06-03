@@ -11,7 +11,7 @@ for each supported script. It is the contract between `host/cluster_enum.py` and
 One akshara = one cluster = one lookup key. The grammar is the same for all scripts;
 only the codepoint ranges differ.
 
-```
+```text
 cluster = base_consonant
         + (virama + consonant)*    ← 0 to max_conjunct_depth repetitions
         + vowel_sign?              ← 0 or 1 dependent vowel sign
@@ -19,6 +19,7 @@ cluster = base_consonant
 ```
 
 Additional cluster types:
+
 - **Standalone vowel** — independent vowel form, single codepoint.
 - **Digit / ASCII** — single codepoint; included in the .aks for mixed-script text.
 
@@ -31,7 +32,7 @@ Clusters are zero-padded to `uint32_t cp[4]` for storage and binary search.
 The MCU segmenter processes one codepoint at a time, driven by the rule table
 embedded in the `.aks` header.
 
-```
+```text
 State: IDLE
   consonant            → emit nothing, start new cluster (State: CONSONANT)
   independent vowel    → emit single-codepoint cluster, stay IDLE
@@ -70,14 +71,15 @@ Unicode block: U+0C80–U+0CFF
 |---------------------|-------------------------------------------------|
 | `consonant_start`   | U+0C95 (ಕ)                                      |
 | `consonant_end`     | U+0CB9 (ಹ)                                      |
-| `virama`            | U+0CCD (ಿ halant)                               |
-| `vowel_sign_start`  | U+0CBE (ಾ)                                      |
+| `virama`            | U+0CCD (ಿ halant)                                |
+| `vowel_sign_start`  | U+0CBE (ಾ)                                       |
 | `vowel_sign_end`    | U+0CCD (reuse virama end; see note)             |
-| `modifier_start`    | U+0C82 (ಂ anusvara)                             |
-| `modifier_end`      | U+0C83 (ಃ visarga)                              |
+| `modifier_start`    | U+0C82 (ಂ anusvara)                              |
+| `modifier_end`      | U+0C83 (ಃ visarga)                               |
 | `max_conjunct_depth`| 2                                               |
 
 Vowel sign ranges (non-contiguous in Unicode; treat as two sub-ranges):
+
 - U+0CBE–U+0CC4
 - U+0CC6–U+0CC8
 - U+0CCA–U+0CCD
@@ -85,9 +87,6 @@ Vowel sign ranges (non-contiguous in Unicode; treat as two sub-ranges):
 Common consonants by corpus frequency (prioritise conjunct enumeration):
 ರ (U+0CB0), ದ (U+0DAD→U+0CA6), ತ (U+0CA4), ಕ (U+0C95), ಗ (U+0C97),
 ನ (U+0CA8), ಮ (U+0CAE)
-
-Rare consonants (deprioritise conjunct forms):
-ಘ (U+0C98), ಙ (U+0C99), ಝ (U+0C9D), ಞ (U+0C9E)
 
 Cluster count target: **~800–1000**
 
@@ -101,14 +100,15 @@ Unicode block: U+0B80–U+0BFF
 |---------------------|-------------------------------------------------|
 | `consonant_start`   | U+0B95 (க)                                      |
 | `consonant_end`     | U+0BB9 (ஹ)                                      |
-| `virama`            | U+0BCD (் pulli)                                |
-| `vowel_sign_start`  | U+0BBE (ா)                                      |
-| `vowel_sign_end`    | U+0BCC (ௌ)                                      |
-| `modifier_start`    | U+0B82 (ஂ anusvara)                             |
+| `virama`            | U+0BCD (் pulli)                                 |
+| `vowel_sign_start`  | U+0BBE (ா)                                       |
+| `vowel_sign_end`    | U+0BCC (ௌ)                                       |
+| `modifier_start`    | U+0B82 (ஂ anusvara)                              |
 | `modifier_end`      | U+0B83 (ஃ visarga)                              |
 | `max_conjunct_depth`| 1                                               |
 
 Vowel sign ranges:
+
 - U+0BBE–U+0BC8
 - U+0BCA–U+0BCC
 
@@ -127,16 +127,17 @@ Unicode block: U+0900–U+097F
 |---------------------|-------------------------------------------------|
 | `consonant_start`   | U+0915 (क)                                      |
 | `consonant_end`     | U+0939 (ह)                                      |
-| `virama`            | U+094D (् halant)                               |
-| `vowel_sign_start`  | U+093E (ा)                                      |
-| `vowel_sign_end`    | U+094C (ौ)                                      |
+| `virama`            | U+094D (् halant)                                |
+| `vowel_sign_start`  | U+093E (ा)                                       |
+| `vowel_sign_end`    | U+094C (ौ)                                       |
 | `modifier_start`    | U+0900 (chandrabindu range start)               |
-| `modifier_end`      | U+0903 (ः visarga)                              |
+| `modifier_end`      | U+0903 (ः visarga)                               |
 | `max_conjunct_depth`| 3                                               |
 
 Extended consonant range (nukta forms): U+0958–U+095F
 
 Modifier codepoints:
+
 - U+0900 chandrabindu (ऀ)
 - U+0901 anusvara (ँ)
 - U+0902 anusvara (ं)
@@ -162,7 +163,7 @@ typedef struct __attribute__((packed)) {
     uint16_t advance;    // horizontal advance in pixels
     uint8_t  width;      // bitmap width in pixels
     uint8_t  bearing_x;  // horizontal bearing (cast to int8_t for signed use)
-} aks_key_entry_t;       // 32 bytes per entry
+} aks_key_entry_t;       // 24 bytes per entry
 ```
 
 ---
@@ -192,7 +193,7 @@ count target. Skip combinations with near-zero real-world occurrence.
 Every segmenter rule must have a corresponding test. Minimum test cases:
 
 | Input string | Expected clusters |
-|---|---|
+| --- | --- |
 | Simple consonant | 1 cluster |
 | Consonant + vowel sign | 1 cluster |
 | Consonant + virama + consonant | 1 cluster (conjunct) |

@@ -11,10 +11,10 @@ Adding a new Indic script requires only a new `.aks` — no firmware change.
 
 ## File Layout
 
-```
-[ Header         ]  24 bytes, fixed
-[ Rule Table     ]  36 bytes, per-script segmentation rules
-[ Cluster Keys   ]  cluster_count × 32 bytes, sorted by codepoint sequence
+```text
+[ Header         ]  28 bytes, fixed
+[ Rule Table     ]  32 bytes, per-script segmentation rules
+[ Cluster Keys   ]  cluster_count × 24 bytes, sorted by codepoint sequence
 [ Bitmap Store   ]  variable, packed bitmaps
 ```
 
@@ -38,7 +38,7 @@ typedef struct __attribute__((packed)) {
     uint32_t rule_offset;    // byte offset from file start to rule table
     uint32_t lookup_offset;  // byte offset from file start to cluster key table
     uint32_t bitmap_offset;  // byte offset from file start to bitmap store
-} aks_header_t;              // 24 bytes total
+} aks_header_t;              // 28 bytes total
 ```
 
 ### Script IDs
@@ -54,6 +54,7 @@ typedef struct __attribute__((packed)) {
 ### Validation
 
 On `akshar_init`, the parser must verify:
+
 - `magic == 0x56414741` — else `AKS_ERR_BAD_MAGIC`
 - `version == 1` — else `AKS_ERR_BAD_VERSION`
 - `script_id` is a known value — else `AKS_ERR_BAD_SCRIPT`
@@ -77,7 +78,7 @@ typedef struct __attribute__((packed)) {
     uint32_t modifier_end;        // modifier range end
     uint8_t  max_conjunct_depth;  // max virama+consonant bonds in one cluster
     uint8_t  _reserved[3];
-} aks_rule_table_t;               // 36 bytes total
+} aks_rule_table_t;               // 32 bytes total
 ```
 
 ### Values per Script
@@ -107,7 +108,7 @@ typedef struct __attribute__((packed)) {
     uint16_t advance;    // horizontal advance in pixels
     uint8_t  width;      // bitmap width in pixels
     uint8_t  bearing_x;  // horizontal bearing (cast to int8_t for signed use)
-} aks_key_entry_t;       // 32 bytes per entry
+} aks_key_entry_t;       // 24 bytes per entry
 ```
 
 Maximum cluster depth: 4 codepoints (covers a 2-consonant conjunct + vowel sign +
@@ -148,7 +149,7 @@ No padding between bitmaps. No padding between rows within a bitmap.
 Bitmaps are not loaded into RAM at init. During render, one bitmap at a time is
 read into a stack-allocated scratch buffer:
 
-```
+```text
 scratch_size = ceil(max_width / (8 / bpp)) × glyph_height
 ```
 
@@ -167,24 +168,7 @@ At 24px with 1bpp this is approximately 1536 bytes.
 #define AKS_ERR_NULL_ARG       -5   // required pointer argument is NULL
 #define AKS_ERR_INVALID_UTF8   -6   // malformed UTF-8 sequence in input
 #define AKS_ERR_IO             -7   // read callback returned error
-#define AKS_ERR_BUF_TOO_SMALL  -8   // key_buf not large enough for key table
 ```
-
----
-
-## Key Table Buffer Sizing
-
-The key table is the only section loaded fully into RAM. Callers must allocate
-statically before calling `akshar_init`:
-
-```c
-// ~1000 clusters × 32 bytes = 32 000 bytes
-#define AKS_KEY_BUF_SIZE (1000 * sizeof(aks_key_entry_t))
-static uint8_t aks_key_buf[AKS_KEY_BUF_SIZE];
-```
-
-`akshar_init` returns `AKS_ERR_BUF_TOO_SMALL` if the buffer is insufficient for
-`cluster_count × sizeof(aks_key_entry_t)` bytes.
 
 ---
 
