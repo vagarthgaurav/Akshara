@@ -68,7 +68,7 @@ class KeyEntry:
 
 class AksReader:
     """
-    Loads a .aks file into memory, mirroring the MCU akshar_init() behaviour.
+    Loads a .aks file into memory, mirroring the MCU akshara_init() behaviour.
 
     Key table is fully loaded (as on MCU). Bitmaps are read on demand.
     """
@@ -570,8 +570,8 @@ def main() -> None:
     parser.add_argument("aks", help="Path to .aks file")
     parser.add_argument(
         "output", nargs="?",
-        default="/tmp/akshar_render.png",
-        help="Output PNG path (default: /tmp/akshar_render.png)",
+        default="/tmp/akshara_render.png",
+        help="Output PNG path (default: /tmp/akshara_render.png)",
     )
     parser.add_argument(
         "--scale", type=int, default=2, metavar="N",

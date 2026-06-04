@@ -1,6 +1,10 @@
 #ifndef AKSHAR_H
 #define AKSHAR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -82,7 +86,7 @@ typedef struct {
     /* internal — do not access directly */
     aks_header_t      _hdr;
     aks_rule_table_t  _rules;
-} akshar_ctx_t;
+} akshara_ctx_t;
 
 /* ── Public API ──────────────────────────────────────────────────────────── */
 
@@ -91,7 +95,7 @@ typedef struct {
  * The key table is NOT loaded into RAM; lookups binary-search via read.
  * Returns AKS_OK on success, AKS_ERR_* on failure.
  */
-int akshar_init(akshar_ctx_t *ctx,
+int akshara_init(akshara_ctx_t *ctx,
                 aks_read_fn   read,    aks_blit_fn  blit,
                 void         *read_ud, void         *blit_ud);
 
@@ -99,13 +103,17 @@ int akshar_init(akshar_ctx_t *ctx,
  * Render a NUL-terminated UTF-8 string starting at pixel (x, y).
  * Returns x position after the last cluster.
  */
-int16_t akshar_render(akshar_ctx_t *ctx, int16_t x, int16_t y,
+int16_t akshara_render(akshara_ctx_t *ctx, int16_t x, int16_t y,
                       const char *utf8);
 
 /*
  * Measure a UTF-8 string without rendering.
  * Returns total advance width in pixels.
  */
-int16_t akshar_measure(akshar_ctx_t *ctx, const char *utf8);
+int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* AKSHAR_H */

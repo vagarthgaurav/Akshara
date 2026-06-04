@@ -1,5 +1,5 @@
 /*
- * aks_parser.c — header and rule table parsing; implements akshar_init().
+ * aks_parser.c — header and rule table parsing; implements akshara_init().
  *
  * Reads 28-byte header + 32-byte rule table via the read callback.
  * The cluster key table is NOT loaded into RAM; it stays in the .aks file
@@ -17,7 +17,7 @@ static bool is_known_script(uint8_t id)
     return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_MALAYALAM;
 }
 
-int akshar_init(akshar_ctx_t *ctx,
+int akshara_init(akshara_ctx_t *ctx,
                 aks_read_fn   read,    aks_blit_fn  blit,
                 void         *read_ud, void         *blit_ud)
 {

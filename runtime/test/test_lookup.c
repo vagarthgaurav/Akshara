@@ -1,5 +1,5 @@
 /*
- * test_lookup.c — C unit tests for akshar_init() and aks_lookup().
+ * test_lookup.c — C unit tests for akshara_init() and aks_lookup().
  *
  * Tests mirror the Python TestLookup suite in host/test/render_png.py so
  * that the C binary search and the Python reference produce identical results
@@ -54,19 +54,19 @@ static void no_blit(int16_t x, int16_t y, const uint8_t *bmp,
 /* Run tests from runtime/test/ so this relative path resolves correctly. */
 #define AKS_PATH "../../fonts/noto_kannada_regular_24.aks"
 
-/* ── akshar_init tests ───────────────────────────────────────────────────── */
+/* ── akshara_init tests ───────────────────────────────────────────────────── */
 
 static void test_init_null_args(FILE *f)
 {
-    akshar_ctx_t ctx;
-    CHECK(akshar_init(NULL,  read_file, no_blit, f, NULL) == AKS_ERR_NULL_ARG);
-    CHECK(akshar_init(&ctx,  NULL,      no_blit, f, NULL) == AKS_ERR_NULL_ARG);
-    CHECK(akshar_init(&ctx,  read_file, NULL,    f, NULL) == AKS_ERR_NULL_ARG);
+    akshara_ctx_t ctx;
+    CHECK(akshara_init(NULL,  read_file, no_blit, f, NULL) == AKS_ERR_NULL_ARG);
+    CHECK(akshara_init(&ctx,  NULL,      no_blit, f, NULL) == AKS_ERR_NULL_ARG);
+    CHECK(akshara_init(&ctx,  read_file, NULL,    f, NULL) == AKS_ERR_NULL_ARG);
 }
 
-static void test_init_succeeds(akshar_ctx_t *ctx, FILE *f)
+static void test_init_succeeds(akshara_ctx_t *ctx, FILE *f)
 {
-    int rc = akshar_init(ctx, read_file, no_blit, f, NULL);
+    int rc = akshara_init(ctx, read_file, no_blit, f, NULL);
     CHECK(rc == AKS_OK);
     CHECK(ctx->_hdr.script_id    == AKS_SCRIPT_KANNADA);
     CHECK(ctx->_hdr.cluster_count > 0);
@@ -76,14 +76,14 @@ static void test_init_succeeds(akshar_ctx_t *ctx, FILE *f)
     CHECK(ctx->_hdr.bpp          == 1 || ctx->_hdr.bpp == 2);
 }
 
-static void test_init_cluster_count_plausible(akshar_ctx_t *ctx)
+static void test_init_cluster_count_plausible(akshara_ctx_t *ctx)
 {
     /* Kannada at 24px should have several hundred clusters. */
     CHECK(ctx->_hdr.cluster_count >= 500);
     CHECK(ctx->_hdr.cluster_count <= 10000);
 }
 
-static void test_init_rule_table(akshar_ctx_t *ctx)
+static void test_init_rule_table(akshara_ctx_t *ctx)
 {
     /* Rule table values must match kannada.py */
     CHECK(ctx->_rules.consonant_start    == 0x0C95u);
@@ -110,14 +110,14 @@ static int read_bad_magic(uint32_t off, uint8_t *buf, uint32_t size, void *ud)
 
 static void test_init_bad_magic(void)
 {
-    akshar_ctx_t ctx;
-    int rc = akshar_init(&ctx, read_bad_magic, no_blit, NULL, NULL);
+    akshara_ctx_t ctx;
+    int rc = akshara_init(&ctx, read_bad_magic, no_blit, NULL, NULL);
     CHECK(rc == AKS_ERR_BAD_MAGIC);
 }
 
 /* ── aks_lookup tests ────────────────────────────────────────────────────── */
 
-static void test_lookup_bare_ka(akshar_ctx_t *ctx)
+static void test_lookup_bare_ka(akshara_ctx_t *ctx)
 {
     /* ಕ bare consonant — must always be present */
     uint32_t cp[4] = {0x0C95u, 0, 0, 0};
@@ -127,7 +127,7 @@ static void test_lookup_bare_ka(akshar_ctx_t *ctx)
     CHECK(e.width   > 0);
 }
 
-static void test_lookup_entry_codepoints(akshar_ctx_t *ctx)
+static void test_lookup_entry_codepoints(akshara_ctx_t *ctx)
 {
     /* Verify the returned entry's cp[] matches what we searched for */
     uint32_t cp[4] = {0x0C95u, 0, 0, 0};
@@ -139,7 +139,7 @@ static void test_lookup_entry_codepoints(akshar_ctx_t *ctx)
     CHECK(e.cp[3] == 0);
 }
 
-static void test_lookup_oov_latin(akshar_ctx_t *ctx)
+static void test_lookup_oov_latin(akshara_ctx_t *ctx)
 {
     /* Latin A is not in the Kannada .aks — mirrors Python test_oov_returns_none */
     uint32_t cp[4] = {0x0041u, 0, 0, 0};
@@ -147,7 +147,7 @@ static void test_lookup_oov_latin(akshar_ctx_t *ctx)
     CHECK(aks_lookup(ctx, cp, &e) == 1);
 }
 
-static void test_lookup_oov_impossible_sequence(akshar_ctx_t *ctx)
+static void test_lookup_oov_impossible_sequence(akshara_ctx_t *ctx)
 {
     /* A codepoint sequence that can never appear as a valid cluster */
     uint32_t cp[4] = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
@@ -155,7 +155,7 @@ static void test_lookup_oov_impossible_sequence(akshar_ctx_t *ctx)
     CHECK(aks_lookup(ctx, cp, &e) == 1);
 }
 
-static void test_lookup_vowel_sign(akshar_ctx_t *ctx)
+static void test_lookup_vowel_sign(akshara_ctx_t *ctx)
 {
     /* ಕಾ = KA + AA-sign */
     uint32_t cp[4] = {0x0C95u, 0x0CBEu, 0, 0};
@@ -164,7 +164,7 @@ static void test_lookup_vowel_sign(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_modifier(akshar_ctx_t *ctx)
+static void test_lookup_modifier(akshara_ctx_t *ctx)
 {
     /* ಕಂ = KA + ANUSVARA */
     uint32_t cp[4] = {0x0C95u, 0x0C82u, 0, 0};
@@ -173,7 +173,7 @@ static void test_lookup_modifier(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_halant(akshar_ctx_t *ctx)
+static void test_lookup_halant(akshara_ctx_t *ctx)
 {
     /* ಕ್ = KA + VIRAMA (half-form / halant) */
     uint32_t cp[4] = {0x0C95u, 0x0CCDu, 0, 0};
@@ -182,7 +182,7 @@ static void test_lookup_halant(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_conjunct_na_na(akshar_ctx_t *ctx)
+static void test_lookup_conjunct_na_na(akshara_ctx_t *ctx)
 {
     /* ನ್ನ = NA + VIRAMA + NA  (from ಕನ್ನಡ; NA is in COMMON_CONSONANTS Tier 1) */
     uint32_t cp[4] = {0x0CA8u, 0x0CCDu, 0x0CA8u, 0};
@@ -191,7 +191,7 @@ static void test_lookup_conjunct_na_na(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_conjunct_ka_ssa(akshar_ctx_t *ctx)
+static void test_lookup_conjunct_ka_ssa(akshara_ctx_t *ctx)
 {
     /* ಕ್ಷ = KA + VIRAMA + SSA  (from ಅಕ್ಷರ; both in COMMON_CONSONANTS) */
     uint32_t cp[4] = {0x0C95u, 0x0CCDu, 0x0CB7u, 0};
@@ -200,7 +200,7 @@ static void test_lookup_conjunct_ka_ssa(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_conjunct_with_vowel(akshar_ctx_t *ctx)
+static void test_lookup_conjunct_with_vowel(akshara_ctx_t *ctx)
 {
     /* ಸ್ಕಾ = SA + VIRAMA + KA + AA-sign  (from ನಮಸ್ಕಾರ; SA and KA both in COMMON_CONSONANTS) */
     uint32_t cp[4] = {0x0CB8u, 0x0CCDu, 0x0C95u, 0x0CBEu};
@@ -209,7 +209,7 @@ static void test_lookup_conjunct_with_vowel(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_kannada_digit(akshar_ctx_t *ctx)
+static void test_lookup_kannada_digit(akshara_ctx_t *ctx)
 {
     /* ೧ = Kannada digit one */
     uint32_t cp[4] = {0x0CE7u, 0, 0, 0};
@@ -218,7 +218,7 @@ static void test_lookup_kannada_digit(akshar_ctx_t *ctx)
     CHECK(e.advance > 0);
 }
 
-static void test_lookup_advance_sane(akshar_ctx_t *ctx)
+static void test_lookup_advance_sane(akshara_ctx_t *ctx)
 {
     /* advance should be <= 4× glyph_height (very wide glyph would be unusual) */
     uint32_t cp[4] = {0x0C95u, 0, 0, 0};
@@ -228,7 +228,7 @@ static void test_lookup_advance_sane(akshar_ctx_t *ctx)
     CHECK(e.width   <= (uint8_t)(ctx->_hdr.glyph_height * 4));
 }
 
-static void test_lookup_bitmap_offset_in_range(akshar_ctx_t *ctx)
+static void test_lookup_bitmap_offset_in_range(akshara_ctx_t *ctx)
 {
     /* bitmap_off must not point past a reasonable upper bound */
     uint32_t cp[4] = {0x0C95u, 0, 0, 0};
@@ -251,7 +251,7 @@ int main(void)
     if (!f) {
         printf("SKIP: cannot open %s\n", AKS_PATH);
         printf("      Generate it first:\n");
-        printf("        cd host && uv run python akshar_gen.py"
+        printf("        cd host && uv run python akshara_gen.py"
                " --font <font.ttf> --script kannada --size 24 --bpp 1"
                " --output ../fonts/noto_kannada_regular_24.aks\n");
         /* Not a test failure — clean checkout has no .aks file */
@@ -260,7 +260,7 @@ int main(void)
         return fail_count ? 1 : 0;
     }
 
-    akshar_ctx_t ctx;
+    akshara_ctx_t ctx;
 
     test_init_null_args(f);
     test_init_succeeds(&ctx, f);

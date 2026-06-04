@@ -1,18 +1,18 @@
 /*
- * akshar.c — single-file entry point for Arduino, PlatformIO, and any other
+ * akshara.c — single-file entry point for Arduino, PlatformIO, and any other
  * build system that expects one .c file per library.
  *
  * ── How to use ────────────────────────────────────────────────────────────
  *
  * Arduino / PlatformIO / single-file drop-in:
- *   Add akshar.c and akshar.h to your project.  This file pulls in all four
+ *   Add akshara.c and akshara.h to your project.  This file pulls in all four
  *   implementation files as a unity build.  Do NOT also compile aks_parser.c,
  *   segmenter.c, lookup.c, or blit.c — you will get duplicate symbol errors.
  *
  * Zephyr / ESP-IDF / FreeRTOS / CMake / Makefile / bare-metal:
  *   Add the four implementation files to your build target instead:
  *     aks_parser.c  segmenter.c  lookup.c  blit.c
- *   akshar.c is not needed and should not be compiled in these environments.
+ *   akshara.c is not needed and should not be compiled in these environments.
  *
  * ── Why no preprocessor guard? ───────────────────────────────────────────
  *

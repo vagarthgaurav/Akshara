@@ -53,7 +53,7 @@ typedef struct __attribute__((packed)) {
 
 ### Validation
 
-On `akshar_init`, the parser must verify:
+On `akshara_init`, the parser must verify:
 
 - `magic == 0x56414741` — else `AKS_ERR_BAD_MAGIC`
 - `version == 1` — else `AKS_ERR_BAD_VERSION`
@@ -174,7 +174,7 @@ At 24px with 1bpp this is approximately 1536 bytes.
 
 ## File Generation
 
-`.aks` files are produced by `host/akshar_gen.py`. The packer (`host/packer.py`)
+`.aks` files are produced by `host/akshara_gen.py`. The packer (`host/packer.py`)
 validates the output by re-parsing it and comparing `cluster_count` and a sample
 of bitmap offsets before writing is considered complete.
 

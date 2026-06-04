@@ -1,10 +1,10 @@
 /*
- * test_blit.c — C unit tests for akshar_render() and akshar_measure().
+ * test_blit.c — C unit tests for akshara_render() and akshara_measure().
  *
  * Tests verify:
  *   - pen advance on single and multi-cluster strings
  *   - blit callback receives correct x (with bearing_x), y, w, h, bpp
- *   - akshar_measure agrees with akshar_render's return value
+ *   - akshara_measure agrees with akshara_render's return value
  *   - OOV clusters degrade gracefully (no crash, blit skipped when all OOV)
  *   - NULL argument handling
  *
@@ -112,82 +112,82 @@ static void test_render_null_ctx(void)
 {
     /* NULL ctx — must return the starting x without crashing. */
     blit_log_t log = {0};
-    int16_t x = akshar_render(NULL, 5, 10, STR_KA);
+    int16_t x = akshara_render(NULL, 5, 10, STR_KA);
     CHECK(x == 5);
     (void)log;
 }
 
-static void test_render_null_utf8(akshar_ctx_t *ctx)
+static void test_render_null_utf8(akshara_ctx_t *ctx)
 {
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    int16_t x = akshar_render(ctx, 7, 0, NULL);
+    int16_t x = akshara_render(ctx, 7, 0, NULL);
     CHECK(x == 7);
     CHECK(log.call_count == 0);
 }
 
 static void test_measure_null_ctx(void)
 {
-    CHECK(akshar_measure(NULL, STR_KA) == 0);
+    CHECK(akshara_measure(NULL, STR_KA) == 0);
 }
 
-static void test_measure_null_utf8(akshar_ctx_t *ctx)
+static void test_measure_null_utf8(akshara_ctx_t *ctx)
 {
-    CHECK(akshar_measure(ctx, NULL) == 0);
+    CHECK(akshara_measure(ctx, NULL) == 0);
 }
 
 /* ── Empty string ─────────────────────────────────────────────────────────── */
 
-static void test_render_empty(akshar_ctx_t *ctx)
+static void test_render_empty(akshara_ctx_t *ctx)
 {
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    int16_t x = akshar_render(ctx, 20, 10, "");
+    int16_t x = akshara_render(ctx, 20, 10, "");
     CHECK(x == 20);
     CHECK(log.call_count == 0);
 }
 
-static void test_measure_empty(akshar_ctx_t *ctx)
+static void test_measure_empty(akshara_ctx_t *ctx)
 {
-    CHECK(akshar_measure(ctx, "") == 0);
+    CHECK(akshara_measure(ctx, "") == 0);
 }
 
 /* ── Single-cluster render ────────────────────────────────────────────────── */
 
-static void test_render_single_ka(akshar_ctx_t *ctx)
+static void test_render_single_ka(akshara_ctx_t *ctx)
 {
     /* Rendering a single ಕ should call blit exactly once and advance the pen. */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    int16_t end_x = akshar_render(ctx, 0, 0, STR_KA);
+    int16_t end_x = akshara_render(ctx, 0, 0, STR_KA);
 
     CHECK(log.call_count == 1);
     CHECK(end_x > 0);            /* pen must move forward */
     CHECK(end_x < 200);          /* sanity: advance is not absurdly large */
 }
 
-static void test_render_blit_dimensions(akshar_ctx_t *ctx)
+static void test_render_blit_dimensions(akshara_ctx_t *ctx)
 {
     /* w, h, bpp passed to blit must match what the header declares. */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_render(ctx, 0, 0, STR_KA);
+    akshara_render(ctx, 0, 0, STR_KA);
 
     CHECK(log.last_h   == ctx->_hdr.glyph_height);
     CHECK(log.last_bpp == ctx->_hdr.bpp);
     CHECK(log.last_w   > 0);
 }
 
-static void test_render_blit_y_passthrough(akshar_ctx_t *ctx)
+static void test_render_blit_y_passthrough(akshara_ctx_t *ctx)
 {
     /* The y coordinate passed to render must be forwarded to blit unchanged. */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_render(ctx, 0, 42, STR_KA);
+    akshara_render(ctx, 0, 42, STR_KA);
     CHECK(log.last_y == 42);
 }
 
-static void test_render_blit_x_bearing(akshar_ctx_t *ctx)
+static void test_render_blit_x_bearing(akshara_ctx_t *ctx)
 {
     /*
      * blit x = render start x + bearing_x (signed).
@@ -200,13 +200,13 @@ static void test_render_blit_x_bearing(akshar_ctx_t *ctx)
     blit_log_t log = {0};
     ctx->blit_ud = &log;
     int16_t start_x = 10;
-    akshar_render(ctx, start_x, 0, STR_KA);
+    akshara_render(ctx, start_x, 0, STR_KA);
 
     int16_t expected_blit_x = (int16_t)(start_x + (int8_t)e.bearing_x);
     CHECK(log.last_x == expected_blit_x);
 }
 
-static void test_render_pen_matches_advance(akshar_ctx_t *ctx)
+static void test_render_pen_matches_advance(akshara_ctx_t *ctx)
 {
     /*
      * For a single-cluster string the return value must equal
@@ -219,23 +219,23 @@ static void test_render_pen_matches_advance(akshar_ctx_t *ctx)
     blit_log_t log = {0};
     ctx->blit_ud = &log;
     int16_t start_x = 5;
-    int16_t end_x   = akshar_render(ctx, start_x, 0, STR_KA);
+    int16_t end_x   = akshara_render(ctx, start_x, 0, STR_KA);
 
     CHECK(end_x == (int16_t)(start_x + e.advance));
 }
 
-static void test_render_bitmap_has_ink(akshar_ctx_t *ctx)
+static void test_render_bitmap_has_ink(akshara_ctx_t *ctx)
 {
     /* A real glyph bitmap must contain at least one set bit. */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_render(ctx, 0, 0, STR_KA);
+    akshara_render(ctx, 0, 0, STR_KA);
     CHECK(log.bmp_nonzero);
 }
 
 /* ── Multi-cluster render ─────────────────────────────────────────────────── */
 
-static void test_render_kannada_cluster_count(akshar_ctx_t *ctx)
+static void test_render_kannada_cluster_count(akshara_ctx_t *ctx)
 {
     /*
      * "ಕನ್ನಡ" segments into 3 clusters: ಕ | ನ್ನ | ಡ.
@@ -243,11 +243,11 @@ static void test_render_kannada_cluster_count(akshar_ctx_t *ctx)
      */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_render(ctx, 0, 0, STR_KANNADA);
+    akshara_render(ctx, 0, 0, STR_KANNADA);
     CHECK(log.call_count == 3);
 }
 
-static void test_render_starting_offset(akshar_ctx_t *ctx)
+static void test_render_starting_offset(akshara_ctx_t *ctx)
 {
     /*
      * Render the same string twice: once at x=0 and once at x=100.
@@ -255,52 +255,52 @@ static void test_render_starting_offset(akshar_ctx_t *ctx)
      */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    int16_t end0 = akshar_render(ctx, 0,   0, STR_KANNADA);
-    int16_t end1 = akshar_render(ctx, 100, 0, STR_KANNADA);
+    int16_t end0 = akshara_render(ctx, 0,   0, STR_KANNADA);
+    int16_t end1 = akshara_render(ctx, 100, 0, STR_KANNADA);
     CHECK(end1 == (int16_t)(end0 + 100));
 }
 
-/* ── akshar_measure ───────────────────────────────────────────────────────── */
+/* ── akshara_measure ───────────────────────────────────────────────────────── */
 
-static void test_measure_single_ka(akshar_ctx_t *ctx)
+static void test_measure_single_ka(akshara_ctx_t *ctx)
 {
     /* measure("ಕ") must equal the advance stored in the key entry for ಕ. */
     uint32_t cp[4] = {0x0C95u, 0, 0, 0};
     aks_key_entry_t e;
     if (aks_lookup(ctx, cp, &e) != AKS_OK) return;
 
-    int16_t measured = akshar_measure(ctx, STR_KA);
+    int16_t measured = akshara_measure(ctx, STR_KA);
     CHECK(measured == (int16_t)e.advance);
 }
 
-static void test_measure_equals_render(akshar_ctx_t *ctx)
+static void test_measure_equals_render(akshara_ctx_t *ctx)
 {
     /*
-     * akshar_measure must return the same total advance as akshar_render
+     * akshara_measure must return the same total advance as akshara_render
      * when render starts at x=0.
      */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    int16_t render_end = akshar_render(ctx, 0, 0, STR_KANNADA);
-    int16_t measured   = akshar_measure(ctx, STR_KANNADA);
+    int16_t render_end = akshara_render(ctx, 0, 0, STR_KANNADA);
+    int16_t measured   = akshara_measure(ctx, STR_KANNADA);
     CHECK(measured == render_end);
 }
 
-static void test_measure_no_blit(akshar_ctx_t *ctx)
+static void test_measure_no_blit(akshara_ctx_t *ctx)
 {
     /*
-     * akshar_measure must not call blit.
+     * akshara_measure must not call blit.
      * Verify by counting calls after measure.
      */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_measure(ctx, STR_KANNADA);
+    akshara_measure(ctx, STR_KANNADA);
     CHECK(log.call_count == 0);
 }
 
 /* ── OOV fallback ─────────────────────────────────────────────────────────── */
 
-static void test_render_oov_no_crash(akshar_ctx_t *ctx)
+static void test_render_oov_no_crash(akshara_ctx_t *ctx)
 {
     /*
      * Latin 'A' is not in the Kannada .aks (confirmed by test_lookup).
@@ -310,15 +310,15 @@ static void test_render_oov_no_crash(akshar_ctx_t *ctx)
     blit_log_t log = {0};
     ctx->blit_ud = &log;
     int16_t start_x = 20;
-    int16_t end_x   = akshar_render(ctx, start_x, 0, STR_OOV_LATIN);
+    int16_t end_x   = akshara_render(ctx, start_x, 0, STR_OOV_LATIN);
     CHECK(log.call_count == 0);
     CHECK(end_x == start_x);     /* no advance when all codepoints are OOV */
 }
 
-static void test_measure_oov_zero(akshar_ctx_t *ctx)
+static void test_measure_oov_zero(akshara_ctx_t *ctx)
 {
     /* measure of a fully-OOV string must be 0. */
-    CHECK(akshar_measure(ctx, STR_OOV_LATIN) == 0);
+    CHECK(akshara_measure(ctx, STR_OOV_LATIN) == 0);
 }
 
 /*
@@ -329,14 +329,14 @@ static void test_measure_oov_zero(akshar_ctx_t *ctx)
  * Evidence: ಕಾ advance (20px) > ಕ advance (11px).  If the fallback drops
  * the vowel sign, ನಮಸ್ಕಾರ measures shorter than if the sign is included.
  */
-static void test_oov_conjunct_vowel_sign_paired(akshar_ctx_t *ctx)
+static void test_oov_conjunct_vowel_sign_paired(akshara_ctx_t *ctx)
 {
     /* Measure ನಮಸ್ಕಾರ — the ಕಾ pair advance must exceed bare ಕ advance. */
-    int16_t w_namaskara = akshar_measure(ctx, STR_NAMASKARA);
+    int16_t w_namaskara = akshara_measure(ctx, STR_NAMASKARA);
 
     /* ನಮಸ್ಕರ (same word but without the AA-sign on ಕ) for comparison.
      * ಸ್ಕ is still OOV; only the trailing vowel sign differs. */
-    int16_t w_no_sign = akshar_measure(ctx,
+    int16_t w_no_sign = akshara_measure(ctx,
         "\xe0\xb2\xa8"   /* ನ */
         "\xe0\xb2\xae"   /* ಮ */
         "\xe0\xb2\xb8"   /* ಸ */
@@ -351,7 +351,7 @@ static void test_oov_conjunct_vowel_sign_paired(akshar_ctx_t *ctx)
     /* Also ensure we got some blit calls — rendering must not be silent. */
     blit_log_t log = {0};
     ctx->blit_ud = &log;
-    akshar_render(ctx, 0, 0, STR_NAMASKARA);
+    akshara_render(ctx, 0, 0, STR_NAMASKARA);
     CHECK(log.call_count >= 4);  /* at minimum: ನ, ಮ, ಕಾ (or ಕ+ಾ), ರ */
 }
 
@@ -369,7 +369,7 @@ int main(void)
     if (!f) {
         printf("SKIP: cannot open %s\n", AKS_PATH);
         printf("      Generate it first:\n");
-        printf("        cd host && uv run python akshar_gen.py"
+        printf("        cd host && uv run python akshara_gen.py"
                " --font <font.ttf> --script kannada --size 24 --bpp 1"
                " --output ../fonts/noto_kannada_regular_24.aks\n");
         printf("\n%d passed, %d failed  (file-dependent tests skipped)\n",
@@ -378,10 +378,10 @@ int main(void)
     }
 
     blit_log_t log = {0};
-    akshar_ctx_t ctx;
-    int rc = akshar_init(&ctx, read_file, log_blit, f, &log);
+    akshara_ctx_t ctx;
+    int rc = akshara_init(&ctx, read_file, log_blit, f, &log);
     if (rc != AKS_OK) {
-        printf("FAIL: akshar_init returned %d\n", rc);
+        printf("FAIL: akshara_init returned %d\n", rc);
         fclose(f);
         return 1;
     }

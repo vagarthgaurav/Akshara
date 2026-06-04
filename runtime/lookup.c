@@ -20,7 +20,7 @@ static int cp4_cmp(const uint32_t a[4], const uint32_t b[4])
     return 0;
 }
 
-int aks_lookup(const akshar_ctx_t *ctx, const uint32_t cp[4],
+int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[4],
                aks_key_entry_t *out)
 {
     if (ctx->_hdr.cluster_count == 0)

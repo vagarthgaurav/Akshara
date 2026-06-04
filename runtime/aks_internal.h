@@ -1,7 +1,7 @@
 #ifndef AKS_INTERNAL_H
 #define AKS_INTERNAL_H
 
-#include "akshar.h"
+#include "akshara.h"
 #include <stdbool.h>
 
 /* ── Codepoint classifiers (shared by segmenter.c and blit.c) ────────────── */
@@ -50,7 +50,7 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
  *   1       : miss (cluster not in table — OOV)
  *   AKS_ERR_IO : read callback failed
  */
-int aks_lookup(const akshar_ctx_t *ctx, const uint32_t cp[4],
+int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[4],
                aks_key_entry_t *out);
 
 #endif /* AKS_INTERNAL_H */

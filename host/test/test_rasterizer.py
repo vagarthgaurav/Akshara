@@ -263,8 +263,8 @@ def _render_png(output: Path, size: int, bpp: int) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render Akshara cluster grid to PNG")
-    parser.add_argument("output", nargs="?", default="/tmp/akshar_rasterizer_test.png",
-                        help="Output PNG path (default: /tmp/akshar_rasterizer_test.png)")
+    parser.add_argument("output", nargs="?", default="/tmp/akshara_rasterizer_test.png",
+                        help="Output PNG path (default: /tmp/akshara_rasterizer_test.png)")
     parser.add_argument("--size", type=int, default=24,
                         help="Font size in pixels (default: 24; use 48+ for LCD/AMOLED)")
     parser.add_argument("--bpp", type=int, default=1, choices=[1, 2],

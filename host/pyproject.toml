@@ -1,5 +1,5 @@
 [project]
-name = "akshar-host"
+name = "akshara-host"
 version = "0.1.0"
 description = "Host-side build tool: enumerate clusters, shape with HarfBuzz, rasterize with FreeType, pack .aks files"
 requires-python = ">=3.10"
@@ -21,7 +21,8 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # All modules live flat in host/; exclude test helpers from the wheel.
 include = [
-    "akshar_gen.py",
+    "aks2h.py",
+    "akshara_gen.py",
     "cluster_enum.py",
     "shaper.py",
     "rasterizer.py",

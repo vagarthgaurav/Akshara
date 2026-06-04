@@ -1,7 +1,7 @@
 /*
  * blit.c — layout engine, blit dispatcher, and OOV fallback.
  *
- * Implements akshar_render() and akshar_measure().
+ * Implements akshara_render() and akshara_measure().
  *
  * Per-cluster flow (render):
  *   segment → lookup → read bitmap into stack scratch → blit callback → advance pen
@@ -10,7 +10,7 @@
  * If a single codepoint is also missing, skip it silently (never show a
  * missing-glyph box).
  *
- * akshar_measure follows the same segment/lookup path but skips all I/O and
+ * akshara_measure follows the same segment/lookup path but skips all I/O and
  * blit; it sums advances and returns the final pen x.
  */
 
@@ -47,7 +47,7 @@ static uint32_t bitmap_nbytes(uint16_t w, uint16_t h, uint8_t bpp)
  * Returns new pen x (= x + entry->advance) even on I/O error, so the caller
  * always advances and does not stall rendering.
  */
-static int16_t blit_entry(akshar_ctx_t *ctx, int16_t x, int16_t y,
+static int16_t blit_entry(akshara_ctx_t *ctx, int16_t x, int16_t y,
                            const aks_key_entry_t *e)
 {
     uint32_t nbytes = bitmap_nbytes(e->width, ctx->_hdr.glyph_height,
@@ -82,7 +82,7 @@ advance:
  * consonant of an OOV conjunct (e.g. ಸ್ಕಾ → ಸ + ್ + ಕಾ, not ಸ + ್ + ಕ).
  * If the pair is also absent, both codepoints fall through to single lookups.
  */
-static int16_t blit_oov(akshar_ctx_t *ctx, int16_t x, int16_t y,
+static int16_t blit_oov(akshara_ctx_t *ctx, int16_t x, int16_t y,
                          const uint32_t cluster[4])
 {
     const aks_rule_table_t *r = &ctx->_rules;
@@ -111,7 +111,7 @@ static int16_t blit_oov(akshar_ctx_t *ctx, int16_t x, int16_t y,
 }
 
 /* OOV measure: same pairing logic as blit_oov, without I/O or blit. */
-static int16_t measure_oov(akshar_ctx_t *ctx, int16_t x,
+static int16_t measure_oov(akshara_ctx_t *ctx, int16_t x,
                             const uint32_t cluster[4])
 {
     const aks_rule_table_t *r = &ctx->_rules;
@@ -140,7 +140,7 @@ static int16_t measure_oov(akshar_ctx_t *ctx, int16_t x,
 
 /* ── Public API ──────────────────────────────────────────────────────────── */
 
-int16_t akshar_render(akshar_ctx_t *ctx, int16_t x, int16_t y,
+int16_t akshara_render(akshara_ctx_t *ctx, int16_t x, int16_t y,
                       const char *utf8)
 {
     if (!ctx || !utf8) return x;
@@ -160,7 +160,7 @@ int16_t akshar_render(akshar_ctx_t *ctx, int16_t x, int16_t y,
     return x;
 }
 
-int16_t akshar_measure(akshar_ctx_t *ctx, const char *utf8)
+int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8)
 {
     if (!ctx || !utf8) return 0;
 
