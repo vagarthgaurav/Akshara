@@ -9,7 +9,7 @@
 #include "aks_internal.h"
 #include <string.h>
 
-#define AKS_MAGIC   0x56414741u  /* "VAGA" little-endian */
+#define AKS_MAGIC   0x414B5348u  /* "AKSH" */
 #define AKS_VERSION 1u
 
 static bool is_known_script(uint8_t id)

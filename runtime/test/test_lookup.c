@@ -98,7 +98,7 @@ static void test_init_rule_table(akshara_ctx_t *ctx)
 
 /* ── bad-magic test (no real file needed) ────────────────────────────────── */
 
-static uint8_t s_bad_hdr[28];  /* all zeros → magic == 0, not 0x56414741 */
+static uint8_t s_bad_hdr[28];  /* all zeros → magic == 0, not 0x414B5348 */
 
 static int read_bad_magic(uint32_t off, uint8_t *buf, uint32_t size, void *ud)
 {

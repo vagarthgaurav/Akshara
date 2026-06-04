@@ -11,7 +11,7 @@ extern "C" {
 /* ── Error codes ─────────────────────────────────────────────────────────── */
 
 #define AKS_OK               0
-#define AKS_ERR_BAD_MAGIC   -1   /* file does not start with 0x56414741 */
+#define AKS_ERR_BAD_MAGIC   -1   /* file does not start with 0x414B5348 */
 #define AKS_ERR_BAD_VERSION -2   /* unsupported format version */
 #define AKS_ERR_BAD_SCRIPT  -3   /* unknown script_id */
 #define AKS_ERR_TRUNCATED   -4   /* file too small for declared structure */
@@ -30,7 +30,7 @@ extern "C" {
 /* ── .aks file structures (packed; layout must match packer.py byte-for-byte) */
 
 typedef struct __attribute__((packed)) {
-    uint32_t magic;          /* 0x56414741 = "VAGA" */
+    uint32_t magic;          /* 0x414B5348 = "AKSH" */
     uint8_t  version;        /* format version, currently 1 */
     uint8_t  script_id;
     uint8_t  weight;         /* 0=Regular, 1=Bold */

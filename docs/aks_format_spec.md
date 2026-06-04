@@ -26,7 +26,7 @@ Sections are contiguous. Offsets to each section are stored in the header.
 
 ```c
 typedef struct __attribute__((packed)) {
-    uint32_t magic;          // 0x56414741 = "VAGA"
+    uint32_t magic;          // 0x414B5348 = "AKSH"
     uint8_t  version;        // format version, currently 1
     uint8_t  script_id;      // see Script IDs
     uint8_t  weight;         // 0 = Regular, 1 = Bold
@@ -55,7 +55,7 @@ typedef struct __attribute__((packed)) {
 
 On `akshara_init`, the parser must verify:
 
-- `magic == 0x56414741` — else `AKS_ERR_BAD_MAGIC`
+- `magic == 0x414B5348` — else `AKS_ERR_BAD_MAGIC`
 - `version == 1` — else `AKS_ERR_BAD_VERSION`
 - `script_id` is a known value — else `AKS_ERR_BAD_SCRIPT`
 - File is large enough for all declared sections — else `AKS_ERR_TRUNCATED`
@@ -161,7 +161,7 @@ At 24px with 1bpp this is approximately 1536 bytes.
 
 ```c
 #define AKS_OK                  0
-#define AKS_ERR_BAD_MAGIC      -1   // file does not start with 0x56414741
+#define AKS_ERR_BAD_MAGIC      -1   // file does not start with 0x414B5348
 #define AKS_ERR_BAD_VERSION    -2   // unsupported format version
 #define AKS_ERR_BAD_SCRIPT     -3   // unknown script_id
 #define AKS_ERR_TRUNCATED      -4   // file too small for declared structure

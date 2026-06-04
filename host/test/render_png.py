@@ -31,7 +31,7 @@ _KEY_FMT  = "<4IIHBB"
 _HDR_SIZE  = struct.calcsize(_HDR_FMT)
 _RULE_SIZE = struct.calcsize(_RULE_FMT)
 _KEY_SIZE  = struct.calcsize(_KEY_FMT)
-_AKS_MAGIC = 0x56414741
+_AKS_MAGIC = 0x414B5348  # "AKSH"
 
 # ── Data classes ──────────────────────────────────────────────────────────────
 

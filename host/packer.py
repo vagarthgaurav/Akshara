@@ -33,7 +33,7 @@ from rasterizer import RasterizedCluster, rasterize_all
 _HDR_FMT = "<IBBBBHBBIIII"
 _HDR_SIZE = struct.calcsize(_HDR_FMT)  # 28 bytes
 
-_AKS_MAGIC = 0x56414741  # "VAGA"
+_AKS_MAGIC = 0x414B5348  # "AKSH"
 _AKS_VERSION = 1
 
 # Rule table: 7×uint32 + uint8 + 3 padding bytes
