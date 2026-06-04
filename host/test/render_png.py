@@ -279,8 +279,27 @@ def render_string(
     for cluster in clusters:
         entry = reader.lookup(cluster)
         if entry is None:
-            # OOV: try each codepoint individually.
-            for cp in cluster:
+            # OOV: try each codepoint individually, but keep consonant+sign pairs
+            # together — standalone vowel signs have no .aks entry, only C+sign pairs do.
+            rules = reader.rules
+            cps = list(cluster)
+            j = 0
+            while j < len(cps):
+                cp = cps[j]
+                is_cons = rules.consonant_start <= cp <= rules.consonant_end
+                next_cp = cps[j + 1] if j + 1 < len(cps) else None
+                next_is_sign = next_cp is not None and (
+                    (rules.vowel_sign_start <= next_cp <= rules.vowel_sign_end
+                     and next_cp != rules.virama)
+                    or (rules.modifier_start <= next_cp <= rules.modifier_end)
+                )
+                if is_cons and next_is_sign:
+                    e = reader.lookup((cp, next_cp))
+                    if e is not None:
+                        draws.append((pen_x, e))
+                        pen_x += e.advance
+                        j += 2
+                        continue
                 e = reader.lookup((cp,))
                 if e is not None:
                     draws.append((pen_x, e))
@@ -289,6 +308,7 @@ def render_string(
                     # Totally unknown — advance by a space-width estimate.
                     pen_x += h.glyph_height // 2
                     oov += 1
+                j += 1
         else:
             draws.append((pen_x, entry))
             pen_x += entry.advance

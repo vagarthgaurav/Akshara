@@ -2,6 +2,31 @@
 #define AKS_INTERNAL_H
 
 #include "akshar.h"
+#include <stdbool.h>
+
+/* ── Codepoint classifiers (shared by segmenter.c and blit.c) ────────────── */
+
+static inline bool aks_is_consonant(uint32_t cp, const aks_rule_table_t *r)
+{
+    return cp >= r->consonant_start && cp <= r->consonant_end;
+}
+
+/*
+ * Excludes virama explicitly: for Kannada, virama == vowel_sign_end, so the
+ * coarse range would otherwise match it.  Harmless for Tamil/Devanagari where
+ * virama falls outside the vowel sign range, but consistent across scripts.
+ */
+static inline bool aks_is_vowel_sign(uint32_t cp, const aks_rule_table_t *r)
+{
+    return cp >= r->vowel_sign_start
+        && cp <= r->vowel_sign_end
+        && cp != r->virama;
+}
+
+static inline bool aks_is_modifier(uint32_t cp, const aks_rule_table_t *r)
+{
+    return cp >= r->modifier_start && cp <= r->modifier_end;
+}
 
 /*
  * Decode the next akshara cluster from *utf8.

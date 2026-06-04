@@ -55,30 +55,10 @@ static int32_t utf8_next(const char **p)
     return (int32_t)cp;
 }
 
-/* ── Codepoint classifiers ───────────────────────────────────────────────── */
-
-static bool is_consonant(uint32_t cp, const aks_rule_table_t *r)
-{
-    return cp >= r->consonant_start && cp <= r->consonant_end;
-}
-
-static bool is_vowel_sign(uint32_t cp, const aks_rule_table_t *r)
-{
-    /*
-     * virama sits at the top of the coarse vowel_sign range for all
-     * supported scripts (e.g. Kannada U+0CCD == vowel_sign_end).
-     * Exclude it here so a terminal halant is handled by the separate
-     * halant-absorption branch below, not absorbed as a vowel sign.
-     */
-    return cp >= r->vowel_sign_start
-        && cp <= r->vowel_sign_end
-        && cp != r->virama;
-}
-
-static bool is_modifier(uint32_t cp, const aks_rule_table_t *r)
-{
-    return cp >= r->modifier_start && cp <= r->modifier_end;
-}
+/* Classifiers are defined as static inline in aks_internal.h. */
+#define is_consonant  aks_is_consonant
+#define is_vowel_sign aks_is_vowel_sign
+#define is_modifier   aks_is_modifier
 
 /* ── Public segmenter ────────────────────────────────────────────────────── */
 

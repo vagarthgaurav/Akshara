@@ -75,14 +75,34 @@ advance:
 
 /*
  * OOV fallback: try to render each codepoint in the cluster individually.
- * Codepoints whose single-codepoint key is also absent are skipped silently.
+ *
+ * A consonant immediately followed by a vowel sign or modifier is tried as a
+ * two-codepoint pair first — standalone vowel signs have no .aks entry, only
+ * consonant+sign pairs do.  This preserves the vowel sign on the second
+ * consonant of an OOV conjunct (e.g. ಸ್ಕಾ → ಸ + ್ + ಕಾ, not ಸ + ್ + ಕ).
+ * If the pair is also absent, both codepoints fall through to single lookups.
  */
 static int16_t blit_oov(akshar_ctx_t *ctx, int16_t x, int16_t y,
                          const uint32_t cluster[4])
 {
+    const aks_rule_table_t *r = &ctx->_rules;
+
     for (int i = 0; i < 4 && cluster[i] != 0; i++) {
-        uint32_t single[4] = {cluster[i], 0u, 0u, 0u};
+        uint32_t cp = cluster[i];
         aks_key_entry_t e;
+
+        if (aks_is_consonant(cp, r) && i + 1 < 4 && cluster[i + 1] != 0 &&
+            (aks_is_vowel_sign(cluster[i + 1], r) ||
+             aks_is_modifier(cluster[i + 1], r))) {
+            uint32_t pair[4] = {cp, cluster[i + 1], 0u, 0u};
+            if (aks_lookup(ctx, pair, &e) == AKS_OK) {
+                x = blit_entry(ctx, x, y, &e);
+                i++;  /* the sign was consumed by the pair */
+                continue;
+            }
+        }
+
+        uint32_t single[4] = {cp, 0u, 0u, 0u};
         if (aks_lookup(ctx, single, &e) == AKS_OK)
             x = blit_entry(ctx, x, y, &e);
         /* miss or I/O error: skip silently */
@@ -90,13 +110,28 @@ static int16_t blit_oov(akshar_ctx_t *ctx, int16_t x, int16_t y,
     return x;
 }
 
-/* OOV measure: sum advances of any individual codepoints that are in-table. */
+/* OOV measure: same pairing logic as blit_oov, without I/O or blit. */
 static int16_t measure_oov(akshar_ctx_t *ctx, int16_t x,
                             const uint32_t cluster[4])
 {
+    const aks_rule_table_t *r = &ctx->_rules;
+
     for (int i = 0; i < 4 && cluster[i] != 0; i++) {
-        uint32_t single[4] = {cluster[i], 0u, 0u, 0u};
+        uint32_t cp = cluster[i];
         aks_key_entry_t e;
+
+        if (aks_is_consonant(cp, r) && i + 1 < 4 && cluster[i + 1] != 0 &&
+            (aks_is_vowel_sign(cluster[i + 1], r) ||
+             aks_is_modifier(cluster[i + 1], r))) {
+            uint32_t pair[4] = {cp, cluster[i + 1], 0u, 0u};
+            if (aks_lookup(ctx, pair, &e) == AKS_OK) {
+                x = (int16_t)(x + e.advance);
+                i++;
+                continue;
+            }
+        }
+
+        uint32_t single[4] = {cp, 0u, 0u, 0u};
         if (aks_lookup(ctx, single, &e) == AKS_OK)
             x = (int16_t)(x + e.advance);
     }

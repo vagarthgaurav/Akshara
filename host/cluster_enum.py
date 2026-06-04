@@ -54,7 +54,8 @@ class ScriptConfig:
     modifier_range: tuple[int, int]    # (start, end) for aks_rule_table_t
     max_conjunct_depth: int
     common_consonants: tuple[int, ...]
-    digits: tuple[int, ...] = ()       # script-native digit codepoints (optional)
+    digits: tuple[int, ...] = ()                            # script-native digits (optional)
+    specific_conjunct_pairs: tuple[tuple[int, int], ...] = ()  # explicit rare pairs (optional)
 
 
 def from_module(mod: ModuleType) -> ScriptConfig:
@@ -81,6 +82,9 @@ def from_module(mod: ModuleType) -> ScriptConfig:
         max_conjunct_depth=mod.MAX_CONJUNCT_DEPTH,
         common_consonants=tuple(mod.COMMON_CONSONANTS),
         digits=tuple(getattr(mod, "DIGITS", [])),
+        specific_conjunct_pairs=tuple(
+            (int(c1), int(c2)) for c1, c2 in getattr(mod, "SPECIFIC_CONJUNCT_PAIRS", [])
+        ),
     )
 
 
@@ -140,6 +144,17 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
 
             for vs in cfg.vowel_signs:
                 add(base + (vs,))
+
+    # 4b. Specific rare conjunct pairs (explicit allowlist from script module).
+    #
+    #     Used for consonants too rare for full O(n²) enumeration but that appear
+    #     in common domain-specific vocabulary (e.g. ಜ್ಞ in ವಿಜ್ಞಾನ).
+    #     Same vowel-sign expansion as common pairs.
+    for c1, c2 in cfg.specific_conjunct_pairs:
+        base = (c1, cfg.virama, c2)
+        add(base)
+        for vs in cfg.vowel_signs:
+            add(base + (vs,))
 
     # Depth-2+ conjuncts (C + virama + C + virama + C = 5+ codepoints) exceed
     # _KEY_MAX_CP and cannot be stored as key entries. The MCU segmenter still

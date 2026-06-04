@@ -81,7 +81,7 @@ static void log_blit(int16_t x, int16_t y, const uint8_t *bmp,
 
 /* ── Path to the generated Kannada .aks file ─────────────────────────────── */
 
-#define AKS_PATH "../../fonts/noto_kannada_regular_24.aks"
+#define AKS_PATH "../../fonts/noto_kannada_regular_20.aks"
 
 /* ── UTF-8 test strings ──────────────────────────────────────────────────── */
 
@@ -91,6 +91,20 @@ static void log_blit(int16_t x, int16_t y, const uint8_t *bmp,
 #define STR_KANNADA "\xe0\xb2\x95\xe0\xb2\xa8\xe0\xb3\x8d\xe0\xb2\xa8\xe0\xb2\xa1"
 /* Latin 'A' — not in the Kannada .aks (confirmed by test_lookup) */
 #define STR_OOV_LATIN "A"
+/*
+ * ನಮಸ್ಕಾರ — contains ಸ್ಕಾ (SA+VIRAMA+KA+AA-sign) which is OOV in the 20px .aks
+ * because SA was not yet in COMMON_CONSONANTS when that .aks was generated.
+ * Used to verify the OOV fallback pairs the AA-sign with KA (ಕಾ) rather than
+ * skipping it silently.
+ */
+#define STR_NAMASKARA \
+    "\xe0\xb2\xa8"   /* ನ  U+0CA8 */ \
+    "\xe0\xb2\xae"   /* ಮ  U+0CAE */ \
+    "\xe0\xb2\xb8"   /* ಸ  U+0CB8 */ \
+    "\xe0\xb3\x8d"   /* ್  U+0CCD virama */ \
+    "\xe0\xb2\x95"   /* ಕ  U+0C95 */ \
+    "\xe0\xb2\xbe"   /* ಾ  U+0CBE AA-sign */ \
+    "\xe0\xb2\xb0"   /* ರ  U+0CB0 */
 
 /* ── NULL argument tests (no .aks required) ──────────────────────────────── */
 
@@ -307,6 +321,40 @@ static void test_measure_oov_zero(akshar_ctx_t *ctx)
     CHECK(akshar_measure(ctx, STR_OOV_LATIN) == 0);
 }
 
+/*
+ * ಸ್ಕಾ is OOV in the 20px .aks (SA not in COMMON_CONSONANTS at gen time).
+ * The OOV fallback must pair KA+AA-sign as a [ಕ, ಾ] lookup instead of
+ * trying the AA-sign as a standalone codepoint (which has no entry).
+ *
+ * Evidence: ಕಾ advance (20px) > ಕ advance (11px).  If the fallback drops
+ * the vowel sign, ನಮಸ್ಕಾರ measures shorter than if the sign is included.
+ */
+static void test_oov_conjunct_vowel_sign_paired(akshar_ctx_t *ctx)
+{
+    /* Measure ನಮಸ್ಕಾರ — the ಕಾ pair advance must exceed bare ಕ advance. */
+    int16_t w_namaskara = akshar_measure(ctx, STR_NAMASKARA);
+
+    /* ನಮಸ್ಕರ (same word but without the AA-sign on ಕ) for comparison.
+     * ಸ್ಕ is still OOV; only the trailing vowel sign differs. */
+    int16_t w_no_sign = akshar_measure(ctx,
+        "\xe0\xb2\xa8"   /* ನ */
+        "\xe0\xb2\xae"   /* ಮ */
+        "\xe0\xb2\xb8"   /* ಸ */
+        "\xe0\xb3\x8d"   /* ್ */
+        "\xe0\xb2\x95"   /* ಕ  (no AA-sign) */
+        "\xe0\xb2\xb0"   /* ರ */
+    );
+
+    /* With the fix, ಕಾ (advance 20) > ಕ (advance 11): namaskara is wider. */
+    CHECK(w_namaskara > w_no_sign);
+
+    /* Also ensure we got some blit calls — rendering must not be silent. */
+    blit_log_t log = {0};
+    ctx->blit_ud = &log;
+    akshar_render(ctx, 0, 0, STR_NAMASKARA);
+    CHECK(log.call_count >= 4);  /* at minimum: ನ, ಮ, ಕಾ (or ಕ+ಾ), ರ */
+}
+
 /* ── Main ────────────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -360,6 +408,7 @@ int main(void)
 
     test_render_oov_no_crash(&ctx);
     test_measure_oov_zero(&ctx);
+    test_oov_conjunct_vowel_sign_paired(&ctx);
 
     fclose(f);
 
