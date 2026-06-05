@@ -36,7 +36,9 @@
 #endif
 
 // ── SD card pin (Option B only) ───────────────────────────────────────────────
+#ifndef AKSHARA_FONT_FROM_FLASH
 static const int SD_CS = 10;
+#endif
 
 // ── Pin definitions ───────────────────────────────────────────────────────────
 // NRF52840
@@ -66,12 +68,6 @@ static const int EPD_MISO = -1;
 // Weact studio display
 GxEPD2_BW<GxEPD2_290_BS, GxEPD2_290_BS::HEIGHT>
   display(GxEPD2_290_BS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
-
-// ── Read callback: font array in flash ────────────────────────────────────────
-static int read_flash(uint32_t offset, uint8_t *buf, uint32_t size, void *ud) {
-  memcpy(buf, (const uint8_t *)ud + offset, size);
-  return AKS_OK;
-}
 
 // ── Read callback: .aks file on SD card ───────────────────────────────────────
 // ud must point to an open SD File object. Each call seeks then reads; this is
@@ -105,9 +101,7 @@ void setup() {
   int err;
 
 #ifdef AKSHARA_FONT_FROM_FLASH
-  err = akshara_init(&ctx,
-                    read_flash, blit_gxepd2,
-                    (void *)anek_kannada_aks, &display);
+  err = akshara_init(&ctx, NULL, blit_gxepd2, anek_kannada_aks, &display);
 #else
   if (!SD.begin(SD_CS)) {
     Serial.println("SD init failed");

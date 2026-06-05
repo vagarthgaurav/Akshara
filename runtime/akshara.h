@@ -1,5 +1,5 @@
-#ifndef AKSHAR_H
-#define AKSHAR_H
+#ifndef AKSHARA_H
+#define AKSHARA_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +93,13 @@ typedef struct {
 /*
  * Initialise context. Reads and validates header + rule table.
  * The key table is NOT loaded into RAM; lookups binary-search via read.
+ *
+ * read     — I/O callback for SD, LittleFS, FatFs, etc.
+ *            Pass NULL when font_data is a pointer to a byte array in
+ *            addressable memory (e.g. a .h file included into flash).
+ * read_ud  — passed to read on every call; for the NULL-read case, pass
+ *            the font array pointer directly (e.g. anek_kannada_aks).
+ *
  * Returns AKS_OK on success, AKS_ERR_* on failure.
  */
 int akshara_init(akshara_ctx_t *ctx,
@@ -116,4 +123,4 @@ int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8);
 }
 #endif
 
-#endif /* AKSHAR_H */
+#endif /* AKSHARA_H */

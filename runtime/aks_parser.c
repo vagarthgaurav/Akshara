@@ -9,27 +9,36 @@
 #include "aks_internal.h"
 #include <string.h>
 
-#define AKS_MAGIC   0x414B5348u  /* "AKSH" */
+#define AKS_MAGIC 0x414B5348u /* "AKSH" */
 #define AKS_VERSION 1u
 
+static int aks_read_from_ptr(uint32_t offset, uint8_t *buf,
+                             uint32_t size, void *ud)
+{
+    memcpy(buf, (const uint8_t *)ud + offset, size);
+    return AKS_OK;
+}
 static bool is_known_script(uint8_t id)
 {
     return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_MALAYALAM;
 }
 
 int akshara_init(akshara_ctx_t *ctx,
-                aks_read_fn   read,    aks_blit_fn  blit,
-                void         *read_ud, void         *blit_ud)
+                 aks_read_fn read, aks_blit_fn blit,
+                 void *read_ud, void *blit_ud)
 {
-    if (!ctx || !read || !blit)
+    if (!ctx || !blit)
+        return AKS_ERR_NULL_ARG;
+    if (!read_ud && !read)
         return AKS_ERR_NULL_ARG;
 
-    ctx->read    = read;
+    /* NULL read means font_data is a pointer in addressable memory (e.g. flash array). */
+    ctx->read = read ? read : aks_read_from_ptr;
     ctx->read_ud = read_ud;
-    ctx->blit    = blit;
+    ctx->blit = blit;
     ctx->blit_ud = blit_ud;
 
-    if (read(0, (uint8_t *)&ctx->_hdr, sizeof(aks_header_t), read_ud) != 0)
+    if (ctx->read(0, (uint8_t *)&ctx->_hdr, sizeof(aks_header_t), read_ud) != 0)
         return AKS_ERR_IO;
 
     if (ctx->_hdr.magic != AKS_MAGIC)
@@ -47,18 +56,18 @@ int akshara_init(akshara_ctx_t *ctx,
      * immediately after rule, bitmap immediately after the key table.
      * Any deviation means a malformed or truncated file.
      */
-    uint32_t expected_rule   = (uint32_t)sizeof(aks_header_t);
+    uint32_t expected_rule = (uint32_t)sizeof(aks_header_t);
     uint32_t expected_lookup = expected_rule + (uint32_t)sizeof(aks_rule_table_t);
     uint32_t expected_bitmap = expected_lookup +
                                ctx->_hdr.cluster_count * (uint32_t)sizeof(aks_key_entry_t);
 
-    if (ctx->_hdr.rule_offset   != expected_rule   ||
+    if (ctx->_hdr.rule_offset != expected_rule ||
         ctx->_hdr.lookup_offset != expected_lookup ||
         ctx->_hdr.bitmap_offset != expected_bitmap)
         return AKS_ERR_TRUNCATED;
 
-    if (read(ctx->_hdr.rule_offset, (uint8_t *)&ctx->_rules,
-             sizeof(aks_rule_table_t), read_ud) != 0)
+    if (ctx->read(ctx->_hdr.rule_offset, (uint8_t *)&ctx->_rules,
+                  sizeof(aks_rule_table_t), read_ud) != 0)
         return AKS_ERR_IO;
 
     return AKS_OK;
