@@ -10,11 +10,11 @@
  *   cluster = consonant (virama consonant)* vowel_sign? modifier?
  *           | any_other_codepoint           (single-codepoint cluster)
  *
- * The cluster array has 4 slots.  The segmenter stops absorbing conjunct
- * pairs once adding another pair would overflow the 4-slot limit, which is
- * equivalent to the key entry format constraint.  In practice, clusters that
- * would exceed 4 codepoints are always absent from the key table and go
- * through OOV fallback anyway.
+ * The cluster array has 6 slots.  The segmenter stops absorbing conjunct
+ * pairs once adding another pair would overflow the 6-slot limit, which is
+ * equivalent to the key entry format constraint (aks_key_entry_t.cp[6]).
+ * Depth-2 conjuncts + vowel sign fit in 6 slots; Devanagari depth-3 will
+ * require a format bump to cp[8] (format v3) and a corresponding change here.
  *
  * For Kannada, virama equals vowel_sign_end (U+0CCD), so is_vowel_sign()
  * excludes it explicitly to prevent absorbing a terminal halant as a vowel
@@ -63,9 +63,9 @@ static int32_t utf8_next(const char **p)
 /* ── Public segmenter ────────────────────────────────────────────────────── */
 
 int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
-                     uint32_t cluster[4])
+                     uint32_t cluster[6])
 {
-    memset(cluster, 0, 4 * sizeof(uint32_t));
+    memset(cluster, 0, 6 * sizeof(uint32_t));
 
     const char *p = *utf8;
     int32_t first = utf8_next(&p);
@@ -88,7 +88,7 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
      * Stop early if the next pair would fill past the 4-slot key limit. */
     int depth = 0;
     while (depth < (int)rules->max_conjunct_depth) {
-        if (n + 2 > 4) break;  /* no room for virama + consonant */
+        if (n + 2 > 6) break;  /* no room for virama + consonant */
 
         const char *save = p;
 
@@ -111,7 +111,7 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
      * Only when depth < max_conjunct_depth; if we have reached the depth
      * limit the spec says to emit the current cluster and leave the virama
      * to become its own single-codepoint cluster on the next call. */
-    if (n < 4 && depth < (int)rules->max_conjunct_depth) {
+    if (n < 6 && depth < (int)rules->max_conjunct_depth) {
         const char *save = p;
         int32_t v = utf8_next(&p);
         if (v == (int32_t)rules->virama) {
@@ -123,7 +123,7 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
     }
 
     /* Optional dependent vowel sign. */
-    if (n < 4) {
+    if (n < 6) {
         const char *save = p;
         int32_t vs = utf8_next(&p);
         if (vs > 0 && is_vowel_sign((uint32_t)vs, rules)) {
@@ -134,7 +134,7 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
     }
 
     /* Optional modifier (anusvara, visarga, chandrabindu). */
-    if (n < 4) {
+    if (n < 6) {
         const char *save = p;
         int32_t mod = utf8_next(&p);
         if (mod > 0 && is_modifier((uint32_t)mod, rules)) {

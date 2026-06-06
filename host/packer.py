@@ -34,15 +34,15 @@ _HDR_FMT = "<IBBBBHBBIIII"
 _HDR_SIZE = struct.calcsize(_HDR_FMT)  # 28 bytes
 
 _AKS_MAGIC = 0x414B5348  # "AKSH"
-_AKS_VERSION = 1
+_AKS_VERSION = 2
 
 # Rule table: 7×uint32 + uint8 + 3 padding bytes
 _RULE_FMT = "<IIIIIIIBxxx"
 _RULE_SIZE = struct.calcsize(_RULE_FMT)  # 32 bytes
 
-# Key entry: cp[4](16) bitmap_off(4) advance(2) width(1) bearing_x(1)
-_KEY_FMT = "<4IIHBB"
-_KEY_SIZE = struct.calcsize(_KEY_FMT)  # 24 bytes
+# Key entry: cp[6](24) bitmap_off(4) advance(2) width(1) bearing_x(1)
+_KEY_FMT = "<6IIHBB"
+_KEY_SIZE = struct.calcsize(_KEY_FMT)  # 32 bytes
 
 
 @dataclass(frozen=True)
@@ -116,10 +116,10 @@ def _pad_bitmap(
     return bytes(result[:expected])
 
 
-def _cluster_sort_key(cluster: Cluster) -> tuple[int, int, int, int]:
-    """Lexicographic uint32[4] sort key (zero-pads to 4 elements)."""
-    padded = list(cluster) + [0] * (4 - len(cluster))
-    return tuple(padded[:4])  # type: ignore[return-value]
+def _cluster_sort_key(cluster: Cluster) -> tuple[int, int, int, int, int, int]:
+    """Lexicographic uint32[6] sort key (zero-pads to 6 elements)."""
+    padded = list(cluster) + [0] * (6 - len(cluster))
+    return tuple(padded[:6])  # type: ignore[return-value]
 
 
 def pack(
@@ -151,12 +151,12 @@ def pack(
         bitmap_off = len(bitmap_store)
         bitmap_store += bitmap
 
-        cp = list(cluster) + [0] * (4 - len(cluster))
+        cp = list(cluster) + [0] * (6 - len(cluster))
         # bearing_x stored as uint8 (MCU casts to int8_t for signed use).
         bearing_x_u8 = r.bearing_x & 0xFF
         entry = struct.pack(
             _KEY_FMT,
-            cp[0], cp[1], cp[2], cp[3],
+            cp[0], cp[1], cp[2], cp[3], cp[4], cp[5],
             bitmap_off,
             r.advance,
             r.width,
@@ -259,7 +259,7 @@ def validate(path: str | Path) -> None:
     check_indices = {0, cluster_count // 2, cluster_count - 1} if cluster_count else set()
     for idx in sorted(check_indices):
         off = lookup_offset + idx * _KEY_SIZE
-        cp0, cp1, cp2, cp3, bmap_off, advance, width, bearing_x = struct.unpack_from(
+        cp0, cp1, cp2, cp3, cp4, cp5, bmap_off, advance, width, bearing_x = struct.unpack_from(
             _KEY_FMT, data, off,
         )
         abs_off = bitmap_offset + bmap_off
@@ -289,7 +289,7 @@ def main() -> None:
     parser.add_argument("--font", required=True, help="Path to TTF/OTF font file")
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari"],
+        choices=["kannada", "tamil", "devanagari", "malayalam"],
     )
     parser.add_argument("--size", type=int, default=24, help="Pixel size")
     parser.add_argument("--bpp", type=int, default=1, choices=[1, 2], help="Bits per pixel")

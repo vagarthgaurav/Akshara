@@ -17,9 +17,9 @@ from dataclasses import dataclass
 from types import ModuleType
 
 # Maximum codepoints per cluster key entry (aks_key_entry_t.cp array length).
-# Depth-2+ conjuncts (5+ codepoints) exceed this limit and are handled by
-# the MCU segmenter's OOV fallback path rather than precomputed entries.
-_KEY_MAX_CP = 4
+# Format v2: cp[6] — supports depth-2 conjuncts + vowel sign (max 6 codepoints).
+# Devanagari depth-3 + vowel sign (8 codepoints) will require cp[8] (format v3).
+_KEY_MAX_CP = 6
 
 Cluster = tuple[int, ...]
 
@@ -55,11 +55,20 @@ class ScriptConfig:
     modifier_range: tuple[int, int]    # (start, end) for aks_rule_table_t
     max_conjunct_depth: int
     digits: tuple[int, ...] = ()
+    # atomic single-codepoint standalone consonant finals (e.g. Malayalam chillus U+0D7A–U+0D7F).
+    # these fall outside the consonant range so the segmenter treats them as single-codepoint
+    # clusters naturally; listing them here ensures they are precomputed in the .aks key table.
+    chillus: tuple[int, ...] = ()
     # attested pairs to precompute: (c1, c2, vowel_signs, modifiers)
     # vowel_signs and modifiers are per-pair attested lists; empty = no extra forms.
     # Scripts using the old (c1, c2) 2-tuple format get all cfg.vowel_signs and no
     # modifiers (see from_module).
     conjunct_pairs: tuple[tuple[int, int, tuple[int, ...], tuple[int, ...]], ...] = ()
+    # depth-2 conjunct triples: (c1, c2, c3, vowel_signs, modifiers)
+    # cluster = c1 + virama + c2 + virama + c3 [+ vs] — 5 or 6 codepoints.
+    # Gated on max_conjunct_depth >= 2. Vowel sign + modifier together would
+    # be 7 codepoints and exceed _KEY_MAX_CP; at most one is stored per triple.
+    conjunct_triples: tuple[tuple[int, int, int, tuple[int, ...], tuple[int, ...]], ...] = ()
     # explicit (consonant, vowel_signs, modifiers) entries for C + VS + modifier clusters.
     # Use for common words where a specific consonant+VS is frequently followed by
     # anusvara (U+0C82) or visarga (U+0C83). modifiers lists which to include.
@@ -89,6 +98,25 @@ def _normalize_conjunct_pairs(
         else:
             c1, c2 = pair
             out.append((int(c1), int(c2), tuple(int(v) for v in all_vowel_signs), ()))
+    return tuple(out)
+
+
+def _normalize_conjunct_triples(
+    raw: list,
+) -> tuple[tuple[int, int, int, tuple[int, ...], tuple[int, ...]], ...]:
+    """
+    Normalise CONJUNCT_TRIPLES to canonical (c1, c2, c3, vowel_signs, modifiers).
+    """
+    out: list[tuple[int, int, int, tuple[int, ...], tuple[int, ...]]] = []
+    for entry in raw:
+        if len(entry) == 5:
+            c1, c2, c3, vs, mods = entry
+            out.append((int(c1), int(c2), int(c3),
+                        tuple(int(v) for v in vs),
+                        tuple(int(m) for m in mods)))
+        else:
+            c1, c2, c3 = entry[:3]
+            out.append((int(c1), int(c2), int(c3), (), ()))
     return tuple(out)
 
 
@@ -135,9 +163,13 @@ def from_module(mod: ModuleType) -> ScriptConfig:
         modifier_range=tuple(mod.MODIFIER_RANGE),  # type: ignore[arg-type]
         max_conjunct_depth=mod.MAX_CONJUNCT_DEPTH,
         digits=tuple(getattr(mod, "DIGITS", [])),
+        chillus=tuple(getattr(mod, "CHILLUS", [])),
         conjunct_pairs=_normalize_conjunct_pairs(
             getattr(mod, "CONJUNCT_PAIRS", []),
             getattr(mod, "VOWEL_SIGNS", []),
+        ),
+        conjunct_triples=_normalize_conjunct_triples(
+            getattr(mod, "CONJUNCT_TRIPLES", []),
         ),
         modifier_clusters=_parse_modifier_clusters(mod),
     )
@@ -197,14 +229,23 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
         for m in pair_mods:
             add(base + (m,))
 
-    # Depth-2+ conjuncts (C + virama + C + virama + C = 5+ codepoints) exceed
-    # _KEY_MAX_CP and cannot be stored as key entries. The MCU segmenter still
-    # absorbs them per max_conjunct_depth, then takes the OOV fallback path.
+    # 5b. Depth-2 conjunct triples: C1 + virama + C2 + virama + C3 [+ vs|mod].
+    #     5 codepoints bare, 6 with vowel sign or modifier (fits _KEY_MAX_CP=6).
+    #     VS + modifier together = 7 codepoints; exceeds limit, so only one is stored.
+    for c1, c2, c3, pair_vs, pair_mods in (cfg.conjunct_triples if cfg.max_conjunct_depth >= 2 else ()):
+        base: Cluster = (c1, cfg.virama, c2, cfg.virama, c3)
+        add(base)
+        for vs in pair_vs:
+            add(base + (vs,))
+        for m in pair_mods:
+            add(base + (m,))
 
-    # 6. Digits and common ASCII punctuation.
+    # 6. Digits, chillus, and common ASCII punctuation.
     for cp in range(0x0030, 0x003A):   # ASCII 0–9
         add((cp,))
     for cp in cfg.digits:              # script-native digits (e.g. Kannada ೦–೯)
+        add((cp,))
+    for cp in cfg.chillus:             # atomic standalone consonant finals (e.g. Malayalam ൺ–ൿ)
         add((cp,))
     for cp in _ASCII_PUNCTUATION:
         add((cp,))
@@ -218,7 +259,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari"],
+        choices=["kannada", "tamil", "devanagari", "malayalam"],
         help="Target script",
     )
     parser.add_argument(

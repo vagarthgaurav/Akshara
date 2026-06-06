@@ -12,6 +12,7 @@ script      := ""
 font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada-Regular.ttf" } \
           else if script == "tamil"      { fonts_dir / "original/NotoSansTamil-Regular.ttf" } \
           else if script == "devanagari" { fonts_dir / "original/NotoSansDevanagari-Regular.ttf" } \
+          else if script == "malayalam"  { fonts_dir / "original/NotoSansMalayalam-Regular.ttf" } \
           else                           { "" }
 size        := "24"
 bpp         := "1"

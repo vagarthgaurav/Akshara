@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 _HDR_FMT  = "<IBBBBHBBIIII"
 _RULE_FMT = "<IIIIIIIBxxx"
-_KEY_FMT  = "<4IIHBB"
+_KEY_FMT  = "<6IIHBB"   # format v2: cp[6] = 32 bytes per entry
 _HDR_SIZE  = struct.calcsize(_HDR_FMT)
 _RULE_SIZE = struct.calcsize(_RULE_FMT)
 _KEY_SIZE  = struct.calcsize(_KEY_FMT)
@@ -56,7 +56,7 @@ class RuleTable:
 
 @dataclass(frozen=True)
 class KeyEntry:
-    cp: tuple[int, int, int, int]   # zero-padded to 4
+    cp: tuple[int, int, int, int, int, int]   # zero-padded to 6 (format v2)
     bitmap_off: int
     advance: int
     width: int
@@ -106,11 +106,11 @@ class AksReader:
         off = self._hdr.lookup_offset
         entries: list[KeyEntry] = []
         for _ in range(self._hdr.cluster_count):
-            cp0, cp1, cp2, cp3, bmap_off, adv, w, bx = \
+            cp0, cp1, cp2, cp3, cp4, cp5, bmap_off, adv, w, bx = \
                 struct.unpack_from(_KEY_FMT, d, off)
             off += _KEY_SIZE
             entries.append(KeyEntry(
-                cp=(cp0, cp1, cp2, cp3),
+                cp=(cp0, cp1, cp2, cp3, cp4, cp5),
                 bitmap_off=bmap_off,
                 advance=adv,
                 width=w,
@@ -120,8 +120,8 @@ class AksReader:
 
     def lookup(self, cluster: tuple[int, ...]) -> KeyEntry | None:
         """Binary search for a cluster. Returns None on miss (OOV)."""
-        # Zero-pad to 4 elements.
-        key = tuple(list(cluster) + [0] * (4 - len(cluster)))
+        # Zero-pad to 6 elements (format v2).
+        key = tuple(list(cluster) + [0] * (6 - len(cluster)))
 
         lo, hi = 0, len(self._keys) - 1
         while lo <= hi:

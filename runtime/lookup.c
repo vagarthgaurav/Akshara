@@ -2,7 +2,7 @@
  * lookup.c — binary search over the sorted cluster key table.
  *
  * The key table is never loaded into RAM.  Each binary search step reads
- * one 24-byte aks_key_entry_t from the .aks file via ctx->read.
+ * one 32-byte aks_key_entry_t from the .aks file via ctx->read.
  * For 1317 clusters this is at most ceil(log2(1317)) = 11 reads per lookup.
  * For flash-backed fonts (read_flash = memcpy) each read is essentially free.
  */
@@ -10,17 +10,17 @@
 #include "aks_internal.h"
 #include <string.h>
 
-/* Lexicographic comparison of two uint32_t[4] codepoint arrays. */
-static int cp4_cmp(const uint32_t a[4], const uint32_t b[4])
+/* Lexicographic comparison of two uint32_t[6] codepoint arrays. */
+static int cp6_cmp(const uint32_t a[6], const uint32_t b[6])
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
         if (a[i] < b[i]) return -1;
         if (a[i] > b[i]) return  1;
     }
     return 0;
 }
 
-int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[4],
+int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
                aks_key_entry_t *out)
 {
     if (ctx->_hdr.cluster_count == 0)
@@ -38,9 +38,9 @@ int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[4],
                       ctx->read_ud) != 0)
             return AKS_ERR_IO;
 
-        uint32_t entry_cp[4];
+        uint32_t entry_cp[6];
         memcpy(entry_cp, out->cp, sizeof(entry_cp));
-        int cmp = cp4_cmp(entry_cp, cp);
+        int cmp = cp6_cmp(entry_cp, cp);
         if (cmp == 0) return AKS_OK;
         if (cmp < 0) {
             lo = mid + 1;
