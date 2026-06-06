@@ -1,0 +1,32 @@
+# Tamil test strings for render_png.py
+# Format: label<TAB>text
+# Covers: bare consonants, vowel signs, pulli (halant), grantha conjunct, digits, punctuation
+
+Tamil (script name)	தமிழ்
+Hello/Vanakkam	வணக்கம்
+Thank you	நன்றி
+India	இந்தியா
+Chennai	சென்னை
+Madurai	மதுரை
+Coimbatore	கோயம்புத்தூர்
+Love	அன்பு
+Science	அறிவியல்
+Technology	தொழில்நுட்பம்
+Water	நீர்
+Sun	சூரியன்
+Moon	நிலவு
+Earth	பூமி
+Sky	வானம்
+Forest	காடு
+River	நதி
+Gold	தங்கம்
+Silver	வெள்ளி
+Grantha conjunct (ksha)	க்ஷமிக்கவும்
+World	உலகம்
+Language	மொழி
+Letter/Akshara	எழுத்து
+Book	புத்தகம்
+School	பள்ளி
+Script digits	௧௨௩ தமிழ்
+ASCII digits	123 தமிழ்
+Punctuation	தமிழ், இந்தியா.

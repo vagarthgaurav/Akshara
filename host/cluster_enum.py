@@ -25,6 +25,7 @@ Cluster = tuple[int, ...]
 
 # Common ASCII punctuation included for mixed-script e-reader text.
 _ASCII_PUNCTUATION: tuple[int, ...] = (
+    0x0020,  # (space)
     0x002C,  # ,
     0x002E,  # .
     0x003F,  # ?

@@ -7,9 +7,8 @@ Mimics the MCU pipeline in Python:
 
 Run:
     cd host
-    uv run python test/render_png.py /tmp/noto_kannada_regular_24.aks [output.png]
-    uv run python test/render_png.py /tmp/noto_kannada_regular_24.aks out.png --bpp 2
-    uv run pytest test/render_png.py -v          # headless assertions only
+    uv run python test/render_png.py <path.aks> [output.png] --words test/test-words/tamil.txt
+    uv run pytest test/render_png.py -v          # headless assertions only (Kannada)
 """
 
 from __future__ import annotations
@@ -329,6 +328,24 @@ def render_string(
     return img, pen_x, oov
 
 
+def load_words_file(path: Path) -> list[tuple[str, str]]:
+    """
+    Load (label, text) pairs from a tab-separated words file.
+    Lines starting with # and blank lines are ignored.
+    """
+    pairs: list[tuple[str, str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t", 1)
+        if len(parts) == 2:
+            pairs.append((parts[0].strip(), parts[1].strip()))
+        else:
+            pairs.append((parts[0].strip(), parts[0].strip()))
+    return pairs
+
+
 def render_grid(
     reader: AksReader,
     strings: list[tuple[str, str]],   # (label, text)
@@ -336,7 +353,7 @@ def render_grid(
     scale: int = 1,
 ) -> None:
     """
-    Render a grid of strings, one per row: index | Kannada text | label.
+    Render a grid of strings, one per row: index | script text | label.
     """
     h = reader.header
     row_h = h.glyph_height + _LINE_PAD * 2
@@ -385,7 +402,7 @@ def render_grid(
             font=font,
         )
 
-        # Rendered Kannada text (upscaled by paste with resize).
+        # Rendered text (upscaled by paste with resize).
         if scale == 1:
             canvas.paste(img, (_LABEL_COL, y))
         else:
@@ -563,13 +580,17 @@ class TestRenderStrings:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Render Kannada strings from a .aks file to PNG"
+        description="Render Indic script strings from a .aks file to PNG"
     )
     parser.add_argument("aks", help="Path to .aks file")
     parser.add_argument(
         "output", nargs="?",
         default="/tmp/akshara_render.png",
         help="Output PNG path (default: /tmp/akshara_render.png)",
+    )
+    parser.add_argument(
+        "--words", metavar="FILE",
+        help="Tab-separated words file (label<TAB>text); defaults to built-in Kannada strings",
     )
     parser.add_argument(
         "--scale", type=int, default=2, metavar="N",
@@ -583,7 +604,8 @@ def main() -> None:
     print(f"  glyph_height={h.glyph_height}px  baseline={h.baseline}px  "
           f"bpp={h.bpp}  clusters={h.cluster_count}")
 
-    render_grid(reader, TEST_STRINGS, Path(args.output), scale=args.scale)
+    strings = load_words_file(Path(args.words)) if args.words else TEST_STRINGS
+    render_grid(reader, strings, Path(args.output), scale=args.scale)
 
 
 if __name__ == "__main__":

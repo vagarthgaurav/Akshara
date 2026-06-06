@@ -1,0 +1,32 @@
+# Kannada test strings for render_png.py
+# Format: label<TAB>text
+# Covers: bare consonants, vowel signs, conjuncts, modifiers, digits, punctuation
+
+Kannada (script name)	ಕನ್ನಡ
+India	ಭಾರತ
+Hello/Namaskara	ನಮಸ್ಕಾರ
+Thank you	ಧನ್ಯವಾದ
+Bengaluru	ಬೆಂಗಳೂರು
+Mysore	ಮೈಸೂರು
+Hubli	ಹುಬ್ಬಳ್ಳಿ
+Ramayana	ರಾಮಾಯಣ
+Mahabharata	ಮಹಾಭಾರತ
+Sanskrit	ಸಂಸ್ಕೃತ
+Love	ಪ್ರೀತಿ
+Science	ವಿಜ್ಞಾನ
+Technology	ತಂತ್ರಜ್ಞಾನ
+Akshara (letter)	ಅಕ್ಷರ
+Literature	ಸಾಹಿತ್ಯ
+Music	ಸಂಗೀತ
+Water	ನೀರು
+Sun	ಸೂರ್ಯ
+Moon	ಚಂದ್ರ
+Earth	ಭೂಮಿ
+Sky	ಆಕಾಶ
+Forest	ಕಾಡು
+River	ನದಿ
+Gold	ಚಿನ್ನ
+Silver	ಬೆಳ್ಳಿ
+Script digits	೧೨೩ ಕನ್ನಡ
+ASCII digits	123 ಕನ್ನಡ
+Punctuation	ಕನ್ನಡ, ಭಾರತ.

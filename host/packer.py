@@ -301,7 +301,7 @@ def main() -> None:
     mod = importlib.import_module(f"scripts.{args.script}")
     cfg = from_module(mod)
 
-    print(f"Rasterizing clusters…")
+    print("Rasterizing clusters…")
     rasterized = rasterize_all(args.font, cfg, args.size, args.bpp)
     print(f"  {len(rasterized)} clusters rasterized")
 
