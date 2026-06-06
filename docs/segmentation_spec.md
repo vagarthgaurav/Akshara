@@ -23,7 +23,7 @@ Additional cluster types:
 - **Standalone vowel** — independent vowel form, single codepoint.
 - **Digit / ASCII** — single codepoint; included in the .aks for mixed-script text.
 
-Clusters are zero-padded to `uint32_t cp[4]` for storage and binary search.
+Clusters are zero-padded to `uint32_t cp[6]` for storage and binary search.
 
 ---
 
@@ -84,10 +84,6 @@ Vowel sign ranges (non-contiguous in Unicode; treat as two sub-ranges):
 - U+0CC6–U+0CC8
 - U+0CCA–U+0CCD
 
-Common consonants by corpus frequency (prioritise conjunct enumeration):
-ರ (U+0CB0), ದ (U+0DAD→U+0CA6), ತ (U+0CA4), ಕ (U+0C95), ಗ (U+0C97),
-ನ (U+0CA8), ಮ (U+0CAE)
-
 Cluster count target: **~800–1000**
 
 ---
@@ -144,8 +140,38 @@ Modifier codepoints:
 - U+0903 visarga (ः)
 
 Note: Devanagari has rich conjunct formation. `max_conjunct_depth=3` covers
-three-consonant clusters (e.g. क्ष्ण). Corpus frequency cutoff still applies —
-enumerate only conjuncts with real-world occurrence.
+three-consonant clusters (e.g. क्ष्ण). Only corpus-attested conjuncts are
+enumerated — combinations with near-zero real-world occurrence are excluded.
+
+Cluster count target: **~800–1000**
+
+---
+
+### Malayalam
+
+Unicode block: U+0D00–U+0D7F
+
+| Field               | Value                                           |
+|---------------------|-------------------------------------------------|
+| `consonant_start`   | U+0D15 (KA)                                     |
+| `consonant_end`     | U+0D39 (HA; U+0D29 unassigned, skipped by host) |
+| `virama`            | U+0D4D (virama)                                 |
+| `vowel_sign_start`  | U+0D3E (AA matra)                               |
+| `vowel_sign_end`    | U+0D4C (AU matra; virama U+0D4D excl. runtime)  |
+| `modifier_start`    | U+0D02 (anusvara)                               |
+| `modifier_end`      | U+0D03 (visarga)                                |
+| `max_conjunct_depth`| 2                                               |
+
+Vowel sign ranges (non-contiguous; virama excluded):
+
+- U+0D3E–U+0D44
+- U+0D46–U+0D48
+- U+0D4A–U+0D4C
+
+Chillu letters (U+0D7A–U+0D7F): atomic Unicode codepoints representing final
+consonant forms (e.g. ൺ ൻ ർ ൽ ൾ ൿ). They fall outside the consonant range, so
+the segmenter emits them as single-codepoint clusters without any special case.
+They are precomputed in the .aks key table via `ScriptConfig.chillus`.
 
 Cluster count target: **~800–1000**
 
@@ -153,17 +179,17 @@ Cluster count target: **~800–1000**
 
 ## Key Table Entry
 
-Clusters are stored as sorted `uint32_t cp[4]` arrays (zero-padded). Sorting is
-lexicographic on the four uint32_t values. This enables binary search on the MCU.
+Clusters are stored as sorted `uint32_t cp[6]` arrays (zero-padded). Sorting is
+lexicographic on the six uint32_t values. This enables binary search on the MCU.
 
 ```c
 typedef struct __attribute__((packed)) {
-    uint32_t cp[4];      // codepoint sequence; unused slots = 0x00000000
+    uint32_t cp[6];      // codepoint sequence; unused slots = 0x00000000
     uint32_t bitmap_off; // byte offset into bitmap store
     uint16_t advance;    // horizontal advance in pixels
     uint8_t  width;      // bitmap width in pixels
     uint8_t  bearing_x;  // horizontal bearing (cast to int8_t for signed use)
-} aks_key_entry_t;       // 24 bytes per entry
+} aks_key_entry_t;       // 32 bytes per entry
 ```
 
 ---
