@@ -24,3 +24,6 @@ Thumbs.db
 # Compiled test binaries
 runtime/test/test_*
 !runtime/test/test_*.c
+
+# Images
+**/*.png

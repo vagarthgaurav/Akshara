@@ -30,7 +30,7 @@
 #include <akshara.h>
 
 #ifdef AKSHARA_FONT_FROM_FLASH
-#include "anek_kannada_aks.h"
+#include "noto_kannada_aks.h"
 #else
 #include <SD.h>
 #endif
@@ -101,20 +101,20 @@ void setup() {
   int err;
 
 #ifdef AKSHARA_FONT_FROM_FLASH
-  err = akshara_init(&ctx, NULL, blit_gxepd2, anek_kannada_aks, &display);
+  err = akshara_init(&ctx, NULL, blit_gxepd2, noto_kannada_aks, &display);
 #else
   if (!SD.begin(SD_CS)) {
     Serial.println("SD init failed");
     return;
   }
-  File font_file = SD.open("/baloo_kannada.aks", FILE_READ);
+  File font_file = SD.open("/noto_kannada_regular_24.aks", FILE_READ);
   if (!font_file) {
-    Serial.println("Cannot open /baloo_kannada.aks");
+    Serial.println("Cannot open /noto_kannada_regular_24.aks");
     return;
   }
   err = akshara_init(&ctx,
-                    read_sd, blit_gxepd2,
-                    &font_file, &display);
+                     read_sd, blit_gxepd2,
+                     &font_file, &display);
 #endif
 
   if (err != AKS_OK) {
@@ -126,7 +126,7 @@ void setup() {
     return;
   }
 
-  const char *line1 = "ಕನ್ನಡ ಸಾಹಿತ್ಯ";
+  const char *line1 = "ಬೆಂಗಳೂರು";
   const char *line2 = "ಬೆಳಕಿನ ಹಾದಿಯಲ್ಲಿ";
 
   display.setFullWindow();

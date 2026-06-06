@@ -546,11 +546,9 @@ class TestRenderStrings:
 
     def test_known_strings_zero_oov(self, reader):
         # Words whose clusters are all guaranteed enumerated:
-        # no conjuncts, or conjuncts where both consonants are in COMMON_CONSONANTS
-        # (ರ ದ ತ ಕ ಗ ನ ಮ).  Words with SA/YA/HA-based conjuncts are intentionally
-        # absent here — those are covered by the cluster enumerator's frequency cutoff.
+        # no conjuncts, or conjuncts present in CONJUNCT_PAIRS.
         zero_oov = [
-            "ಕನ್ನಡ",   # ಕ | ನ್ನ | ಡ  — ನ+ನ both in COMMON_CONSONANTS
+            "ಕನ್ನಡ",   # ಕ | ನ್ನ | ಡ  — ನ+ನ in CONJUNCT_PAIRS
             "ಭಾರತ",    # ಭಾ | ರಾ | ತ  — no conjuncts
             "ಬೆಂಗಳೂರು", # ಬೆಂ | ಗ | ಳೂ | ರು — no conjuncts
             "ನೀರು",    # ನೀ | ರು      — no conjuncts

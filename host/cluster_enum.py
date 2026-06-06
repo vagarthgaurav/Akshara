@@ -53,9 +53,62 @@ class ScriptConfig:
     modifiers: tuple[int, ...]
     modifier_range: tuple[int, int]    # (start, end) for aks_rule_table_t
     max_conjunct_depth: int
-    common_consonants: tuple[int, ...]
-    digits: tuple[int, ...] = ()                            # script-native digits (optional)
-    specific_conjunct_pairs: tuple[tuple[int, int], ...] = ()  # explicit rare pairs (optional)
+    digits: tuple[int, ...] = ()
+    # attested pairs to precompute: (c1, c2, vowel_signs, modifiers)
+    # vowel_signs and modifiers are per-pair attested lists; empty = no extra forms.
+    # Scripts using the old (c1, c2) 2-tuple format get all cfg.vowel_signs and no
+    # modifiers (see from_module).
+    conjunct_pairs: tuple[tuple[int, int, tuple[int, ...], tuple[int, ...]], ...] = ()
+    # explicit (consonant, vowel_signs, modifiers) entries for C + VS + modifier clusters.
+    # Use for common words where a specific consonant+VS is frequently followed by
+    # anusvara (U+0C82) or visarga (U+0C83). modifiers lists which to include.
+    modifier_clusters: tuple[tuple[int, tuple[int, ...], tuple[int, ...]], ...] = ()
+
+
+def _normalize_conjunct_pairs(
+    raw: list,
+    all_vowel_signs: list[int],
+) -> tuple[tuple[int, int, tuple[int, ...], tuple[int, ...]], ...]:
+    """
+    Normalise CONJUNCT_PAIRS to the 4-tuple canonical form
+    (c1, c2, vowel_signs, modifiers).
+
+    Old 2-tuple (Tamil/Devanagari): falls back to all_vowel_signs, no modifiers.
+    Old 3-tuple (Kannada before modifier support): uses per-pair VS, no modifiers.
+    New 4-tuple (Kannada): uses per-pair VS and per-pair modifiers.
+    """
+    out: list[tuple[int, int, tuple[int, ...], tuple[int, ...]]] = []
+    for pair in raw:
+        if len(pair) == 4:
+            c1, c2, vs, mods = pair
+            out.append((int(c1), int(c2), tuple(int(v) for v in vs), tuple(int(m) for m in mods)))
+        elif len(pair) == 3:
+            c1, c2, vs = pair
+            out.append((int(c1), int(c2), tuple(int(v) for v in vs), ()))
+        else:
+            c1, c2 = pair
+            out.append((int(c1), int(c2), tuple(int(v) for v in all_vowel_signs), ()))
+    return tuple(out)
+
+
+def _parse_modifier_clusters(
+    mod: ModuleType,
+) -> tuple[tuple[int, tuple[int, ...], tuple[int, ...]], ...]:
+    """
+    Read MODIFIER_CLUSTERS (new 3-tuple format) or fall back to ANUSVARA_CLUSTERS
+    (old 2-tuple format, defaulting modifiers to [anusvara]).
+    """
+    raw = getattr(mod, "MODIFIER_CLUSTERS", None)
+    if raw is not None:
+        return tuple(
+            (int(c), tuple(int(v) for v in vs), tuple(int(m) for m in mods))
+            for c, vs, mods in raw
+        )
+    raw = getattr(mod, "ANUSVARA_CLUSTERS", [])
+    return tuple(
+        (int(c), tuple(int(v) for v in vs), (0x0C82,))
+        for c, vs in raw
+    )
 
 
 def from_module(mod: ModuleType) -> ScriptConfig:
@@ -63,7 +116,7 @@ def from_module(mod: ModuleType) -> ScriptConfig:
     required = (
         "SCRIPT_ID", "INDEPENDENT_VOWELS", "CONSONANTS", "CONSONANT_RANGE",
         "VIRAMA", "VOWEL_SIGNS", "VOWEL_SIGN_RANGE", "MODIFIERS", "MODIFIER_RANGE",
-        "MAX_CONJUNCT_DEPTH", "COMMON_CONSONANTS",
+        "MAX_CONJUNCT_DEPTH",
     )
     missing = [attr for attr in required if not hasattr(mod, attr)]
     if missing:
@@ -80,11 +133,12 @@ def from_module(mod: ModuleType) -> ScriptConfig:
         modifiers=tuple(mod.MODIFIERS),
         modifier_range=tuple(mod.MODIFIER_RANGE),  # type: ignore[arg-type]
         max_conjunct_depth=mod.MAX_CONJUNCT_DEPTH,
-        common_consonants=tuple(mod.COMMON_CONSONANTS),
         digits=tuple(getattr(mod, "DIGITS", [])),
-        specific_conjunct_pairs=tuple(
-            (int(c1), int(c2)) for c1, c2 in getattr(mod, "SPECIFIC_CONJUNCT_PAIRS", [])
+        conjunct_pairs=_normalize_conjunct_pairs(
+            getattr(mod, "CONJUNCT_PAIRS", []),
+            getattr(mod, "VOWEL_SIGNS", []),
         ),
+        modifier_clusters=_parse_modifier_clusters(mod),
     )
 
 
@@ -96,7 +150,6 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
     Every cluster fits within _KEY_MAX_CP codepoints (the .aks key entry limit).
     """
     seen: set[Cluster] = set()
-    common = frozenset(cfg.common_consonants)
 
     def add(cluster: Cluster) -> None:
         if len(cluster) <= _KEY_MAX_CP:
@@ -106,10 +159,12 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
     for v in cfg.independent_vowels:
         add((v,))
 
-    # 2. Standalone virama — needed for OOV fallback of unrecognised conjuncts.
-    #    When a conjunct is missing from the .aks, the fallback renders each
-    #    codepoint individually: consonant + virama glyph + consonant.
+    # 2. Standalone virama and modifiers — needed for OOV fallback.
+    #    Conjunct fallback: consonant + virama glyph + consonant.
+    #    C+VS+modifier fallback: (C+VS) glyph + standalone modifier glyph.
     add((cfg.virama,))
+    for m in cfg.modifiers:
+        add((m,))
 
     # 3. Simple consonant clusters.
     for c in cfg.consonants:
@@ -121,46 +176,31 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
 
         for vs in cfg.vowel_signs:
             add((c, vs))
-            for m in cfg.modifiers:
-                add((c, vs, m))   # consonant + vowel_sign + modifier (e.g. ಬೆಂ)
 
-    # 4. Depth-1 conjuncts: C1 + virama + C2 [+ vowel_sign | + modifier].
+    # 4. Explicit C + VS + modifier clusters from MODIFIER_CLUSTERS.
+    for c, vs_list, mods in cfg.modifier_clusters:
+        for vs in vs_list:
+            for m in mods:
+                add((c, vs, m))
+
+    # 5. Conjuncts: C1 + virama + C2 [+ vowel_sign] [+ modifier], from the attested
+    #    pair list. Gated on max_conjunct_depth >= 1.
     #
-    #    Frequency filter: BOTH consonants must be in COMMON_CONSONANTS.
-    #    "Either common" would admit too many near-zero-occurrence pairs and
-    #    blow past the ~1000-cluster MCU memory target.
-    #
-    #    C1 + virama + C2 + vowel_sign + modifier = 5 codepoints; exceeds
-    #    _KEY_MAX_CP and is intentionally omitted.
-    for c1 in cfg.consonants:
-        if c1 not in common:
-            continue
-        for c2 in cfg.consonants:
-            if c2 not in common:
-                continue
-
-            base: Cluster = (c1, cfg.virama, c2)
-            add(base)
-
-            for vs in cfg.vowel_signs:
-                add(base + (vs,))
-
-    # 4b. Specific rare conjunct pairs (explicit allowlist from script module).
-    #
-    #     Used for consonants too rare for full O(n²) enumeration but that appear
-    #     in common domain-specific vocabulary (e.g. ಜ್ಞ in ವಿಜ್ಞಾನ).
-    #     Same vowel-sign expansion as common pairs.
-    for c1, c2 in cfg.specific_conjunct_pairs:
-        base = (c1, cfg.virama, c2)
+    #    C1 + virama + C2 + vowel_sign + modifier = 5 codepoints; exceeds _KEY_MAX_CP
+    #    and is intentionally omitted (OOV fallback handles it on the MCU).
+    for c1, c2, pair_vs, pair_mods in (cfg.conjunct_pairs if cfg.max_conjunct_depth >= 1 else ()):
+        base: Cluster = (c1, cfg.virama, c2)
         add(base)
-        for vs in cfg.vowel_signs:
+        for vs in pair_vs:
             add(base + (vs,))
+        for m in pair_mods:
+            add(base + (m,))
 
     # Depth-2+ conjuncts (C + virama + C + virama + C = 5+ codepoints) exceed
     # _KEY_MAX_CP and cannot be stored as key entries. The MCU segmenter still
     # absorbs them per max_conjunct_depth, then takes the OOV fallback path.
 
-    # 5. Digits and common ASCII punctuation.
+    # 6. Digits and common ASCII punctuation.
     for cp in range(0x0030, 0x003A):   # ASCII 0–9
         add((cp,))
     for cp in cfg.digits:              # script-native digits (e.g. Kannada ೦–೯)
