@@ -31,7 +31,7 @@ extern "C" {
 
 typedef struct __attribute__((packed)) {
     uint32_t magic;          /* 0x414B5348 = "AKSH" */
-    uint8_t  version;        /* format version, currently 1 */
+    uint8_t  version;        /* format version, currently 2 */
     uint8_t  script_id;
     uint8_t  weight;         /* 0=Regular, 1=Bold */
     uint8_t  bpp;            /* 1=monochrome, 2=4-grey */
@@ -57,12 +57,14 @@ typedef struct __attribute__((packed)) {
 } aks_rule_table_t;           /* 32 bytes */
 
 typedef struct __attribute__((packed)) {
-    uint32_t cp[4];           /* codepoint sequence, zero-padded */
+    uint32_t cp[6];           /* codepoint sequence, zero-padded; 6 slots support
+                               * depth-2 conjuncts + vowel sign (max 6 codepoints).
+                               * Devanagari depth-3 will require cp[8] (format v3). */
     uint32_t bitmap_off;      /* byte offset into bitmap store */
     uint16_t advance;         /* horizontal advance in pixels */
     uint8_t  width;           /* bitmap width in pixels */
     uint8_t  bearing_x;       /* horizontal bearing (cast to int8_t for use) */
-} aks_key_entry_t;            /* 24 bytes */
+} aks_key_entry_t;            /* 32 bytes */
 
 /* ── Callbacks (app-provided) ────────────────────────────────────────────── */
 

@@ -10,7 +10,7 @@
 #include <string.h>
 
 #define AKS_MAGIC 0x414B5348u /* "AKSH" */
-#define AKS_VERSION 1u
+#define AKS_VERSION 2u
 
 static int aks_read_from_ptr(uint32_t offset, uint8_t *buf,
                              uint32_t size, void *ud)
@@ -18,6 +18,7 @@ static int aks_read_from_ptr(uint32_t offset, uint8_t *buf,
     memcpy(buf, (const uint8_t *)ud + offset, size);
     return AKS_OK;
 }
+
 static bool is_known_script(uint8_t id)
 {
     return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_MALAYALAM;
@@ -29,10 +30,10 @@ int akshara_init(akshara_ctx_t *ctx,
 {
     if (!ctx || !blit)
         return AKS_ERR_NULL_ARG;
-    if (!read_ud && !read)
+    if (!read && !read_ud)
         return AKS_ERR_NULL_ARG;
 
-    /* NULL read means font_data is a pointer in addressable memory (e.g. flash array). */
+    /* NULL read means font_data is a const array in addressable memory (e.g. flash). */
     ctx->read = read ? read : aks_read_from_ptr;
     ctx->read_ud = read_ud;
     ctx->blit = blit;

@@ -216,8 +216,8 @@ def enumerate_clusters(cfg: ScriptConfig) -> list[Cluster]:
             for m in mods:
                 add((c, vs, m))
 
-    # 5. Conjuncts: C1 + virama + C2 [+ vowel_sign] [+ modifier], from the attested
-    #    pair list. Gated on max_conjunct_depth >= 1.
+    # 5. Conjuncts: C1 + virama + C2 [+ vowel_sign] [+ modifier].
+    #    Gated on max_conjunct_depth >= 1.
     #
     #    C1 + virama + C2 + vowel_sign + modifier = 5 codepoints; exceeds _KEY_MAX_CP
     #    and is intentionally omitted (OOV fallback handles it on the MCU).
@@ -259,7 +259,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari", "malayalam"],
+        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu"],
         help="Target script",
     )
     parser.add_argument(

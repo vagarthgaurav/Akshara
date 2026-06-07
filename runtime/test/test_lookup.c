@@ -59,9 +59,13 @@ static void no_blit(int16_t x, int16_t y, const uint8_t *bmp,
 static void test_init_null_args(FILE *f)
 {
     akshara_ctx_t ctx;
-    CHECK(akshara_init(NULL,  read_file, no_blit, f, NULL) == AKS_ERR_NULL_ARG);
-    CHECK(akshara_init(&ctx,  NULL,      no_blit, f, NULL) == AKS_ERR_NULL_ARG);
-    CHECK(akshara_init(&ctx,  read_file, NULL,    f, NULL) == AKS_ERR_NULL_ARG);
+    /* NULL ctx or blit are always errors. */
+    CHECK(akshara_init(NULL,  read_file, no_blit, f,    NULL) == AKS_ERR_NULL_ARG);
+    CHECK(akshara_init(&ctx,  read_file, NULL,    f,    NULL) == AKS_ERR_NULL_ARG);
+    /* NULL read + NULL read_ud: nothing to read from → error. */
+    CHECK(akshara_init(&ctx,  NULL,      no_blit, NULL, NULL) == AKS_ERR_NULL_ARG);
+    /* NULL read + non-NULL read_ud: flash array shortcut → not an error. */
+    CHECK(akshara_init(&ctx,  NULL,      no_blit, f,    NULL) != AKS_ERR_NULL_ARG);
 }
 
 static void test_init_succeeds(akshara_ctx_t *ctx, FILE *f)
@@ -120,7 +124,7 @@ static void test_init_bad_magic(void)
 static void test_lookup_bare_ka(akshara_ctx_t *ctx)
 {
     /* ಕ bare consonant — must always be present */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -130,7 +134,7 @@ static void test_lookup_bare_ka(akshara_ctx_t *ctx)
 static void test_lookup_entry_codepoints(akshara_ctx_t *ctx)
 {
     /* Verify the returned entry's cp[] matches what we searched for */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.cp[0] == 0x0C95u);
@@ -142,7 +146,7 @@ static void test_lookup_entry_codepoints(akshara_ctx_t *ctx)
 static void test_lookup_oov_latin(akshara_ctx_t *ctx)
 {
     /* Latin A is not in the Kannada .aks — mirrors Python test_oov_returns_none */
-    uint32_t cp[4] = {0x0041u, 0, 0, 0};
+    uint32_t cp[6] = {0x0041u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == 1);
 }
@@ -150,7 +154,7 @@ static void test_lookup_oov_latin(akshara_ctx_t *ctx)
 static void test_lookup_oov_impossible_sequence(akshara_ctx_t *ctx)
 {
     /* A codepoint sequence that can never appear as a valid cluster */
-    uint32_t cp[4] = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
+    uint32_t cp[6] = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == 1);
 }
@@ -158,7 +162,7 @@ static void test_lookup_oov_impossible_sequence(akshara_ctx_t *ctx)
 static void test_lookup_vowel_sign(akshara_ctx_t *ctx)
 {
     /* ಕಾ = KA + AA-sign */
-    uint32_t cp[4] = {0x0C95u, 0x0CBEu, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0x0CBEu, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -167,7 +171,7 @@ static void test_lookup_vowel_sign(akshara_ctx_t *ctx)
 static void test_lookup_modifier(akshara_ctx_t *ctx)
 {
     /* ಕಂ = KA + ANUSVARA */
-    uint32_t cp[4] = {0x0C95u, 0x0C82u, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0x0C82u, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -176,7 +180,7 @@ static void test_lookup_modifier(akshara_ctx_t *ctx)
 static void test_lookup_halant(akshara_ctx_t *ctx)
 {
     /* ಕ್ = KA + VIRAMA (half-form / halant) */
-    uint32_t cp[4] = {0x0C95u, 0x0CCDu, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0x0CCDu, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -185,7 +189,7 @@ static void test_lookup_halant(akshara_ctx_t *ctx)
 static void test_lookup_conjunct_na_na(akshara_ctx_t *ctx)
 {
     /* ನ್ನ = NA + VIRAMA + NA  (from ಕನ್ನಡ; NA is in COMMON_CONSONANTS Tier 1) */
-    uint32_t cp[4] = {0x0CA8u, 0x0CCDu, 0x0CA8u, 0};
+    uint32_t cp[6] = {0x0CA8u, 0x0CCDu, 0x0CA8u, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -194,7 +198,7 @@ static void test_lookup_conjunct_na_na(akshara_ctx_t *ctx)
 static void test_lookup_conjunct_ka_ssa(akshara_ctx_t *ctx)
 {
     /* ಕ್ಷ = KA + VIRAMA + SSA  (from ಅಕ್ಷರ; both in COMMON_CONSONANTS) */
-    uint32_t cp[4] = {0x0C95u, 0x0CCDu, 0x0CB7u, 0};
+    uint32_t cp[6] = {0x0C95u, 0x0CCDu, 0x0CB7u, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -203,7 +207,7 @@ static void test_lookup_conjunct_ka_ssa(akshara_ctx_t *ctx)
 static void test_lookup_conjunct_with_vowel(akshara_ctx_t *ctx)
 {
     /* ಸ್ಕಾ = SA + VIRAMA + KA + AA-sign  (from ನಮಸ್ಕಾರ; SA and KA both in COMMON_CONSONANTS) */
-    uint32_t cp[4] = {0x0CB8u, 0x0CCDu, 0x0C95u, 0x0CBEu};
+    uint32_t cp[6] = {0x0CB8u, 0x0CCDu, 0x0C95u, 0x0CBEu, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -212,7 +216,7 @@ static void test_lookup_conjunct_with_vowel(akshara_ctx_t *ctx)
 static void test_lookup_kannada_digit(akshara_ctx_t *ctx)
 {
     /* ೧ = Kannada digit one */
-    uint32_t cp[4] = {0x0CE7u, 0, 0, 0};
+    uint32_t cp[6] = {0x0CE7u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance > 0);
@@ -221,7 +225,7 @@ static void test_lookup_kannada_digit(akshara_ctx_t *ctx)
 static void test_lookup_advance_sane(akshara_ctx_t *ctx)
 {
     /* advance should be <= 4× glyph_height (very wide glyph would be unusual) */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     CHECK(e.advance <= (uint16_t)(ctx->_hdr.glyph_height * 4));
@@ -231,7 +235,7 @@ static void test_lookup_advance_sane(akshara_ctx_t *ctx)
 static void test_lookup_bitmap_offset_in_range(akshara_ctx_t *ctx)
 {
     /* bitmap_off must not point past a reasonable upper bound */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     CHECK(aks_lookup(ctx, cp, &e) == AKS_OK);
     /* 300 KB is a very conservative upper bound for the Kannada bitmap store */

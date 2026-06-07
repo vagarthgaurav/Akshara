@@ -193,7 +193,7 @@ static void test_render_blit_x_bearing(akshara_ctx_t *ctx)
      * blit x = render start x + bearing_x (signed).
      * Look up ಕ to get its bearing_x, then verify it is applied.
      */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     if (aks_lookup(ctx, cp, &e) != AKS_OK) return;  /* skip if OOV */
 
@@ -212,7 +212,7 @@ static void test_render_pen_matches_advance(akshara_ctx_t *ctx)
      * For a single-cluster string the return value must equal
      * start_x + e.advance regardless of bearing_x.
      */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     if (aks_lookup(ctx, cp, &e) != AKS_OK) return;
 
@@ -265,7 +265,7 @@ static void test_render_starting_offset(akshara_ctx_t *ctx)
 static void test_measure_single_ka(akshara_ctx_t *ctx)
 {
     /* measure("ಕ") must equal the advance stored in the key entry for ಕ. */
-    uint32_t cp[4] = {0x0C95u, 0, 0, 0};
+    uint32_t cp[6] = {0x0C95u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
     if (aks_lookup(ctx, cp, &e) != AKS_OK) return;
 
