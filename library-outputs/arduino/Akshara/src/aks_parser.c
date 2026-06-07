@@ -24,22 +24,10 @@ static bool is_known_script(uint8_t id)
     return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_MALAYALAM;
 }
 
-int akshara_init(akshara_ctx_t *ctx,
-                 aks_read_fn read, aks_blit_fn blit,
-                 void *read_ud, void *blit_ud)
+/* Shared by akshara_init and akshara_set_font. Caller must have set ctx->read / read_ud. */
+static int aks_load_font(akshara_ctx_t *ctx)
 {
-    if (!ctx || !blit)
-        return AKS_ERR_NULL_ARG;
-    if (!read && !read_ud)
-        return AKS_ERR_NULL_ARG;
-
-    /* NULL read means font_data is a const array in addressable memory (e.g. flash). */
-    ctx->read = read ? read : aks_read_from_ptr;
-    ctx->read_ud = read_ud;
-    ctx->blit = blit;
-    ctx->blit_ud = blit_ud;
-
-    if (ctx->read(0, (uint8_t *)&ctx->_hdr, sizeof(aks_header_t), read_ud) != 0)
+    if (ctx->read(0, (uint8_t *)&ctx->_hdr, sizeof(aks_header_t), ctx->read_ud) != 0)
         return AKS_ERR_IO;
 
     if (ctx->_hdr.magic != AKS_MAGIC)
@@ -68,8 +56,39 @@ int akshara_init(akshara_ctx_t *ctx,
         return AKS_ERR_TRUNCATED;
 
     if (ctx->read(ctx->_hdr.rule_offset, (uint8_t *)&ctx->_rules,
-                  sizeof(aks_rule_table_t), read_ud) != 0)
+                  sizeof(aks_rule_table_t), ctx->read_ud) != 0)
         return AKS_ERR_IO;
 
     return AKS_OK;
+}
+
+int akshara_init(akshara_ctx_t *ctx,
+                 aks_read_fn read, aks_blit_fn blit,
+                 void *read_ud, void *blit_ud)
+{
+    if (!ctx || !blit)
+        return AKS_ERR_NULL_ARG;
+    if (!read && !read_ud)
+        return AKS_ERR_NULL_ARG;
+
+    /* NULL read means font_data is a const array in addressable memory (e.g. flash). */
+    ctx->read = read ? read : aks_read_from_ptr;
+    ctx->read_ud = read_ud;
+    ctx->blit = blit;
+    ctx->blit_ud = blit_ud;
+
+    return aks_load_font(ctx);
+}
+
+int akshara_set_font(akshara_ctx_t *ctx, aks_read_fn read, void *read_ud)
+{
+    if (!ctx)
+        return AKS_ERR_NULL_ARG;
+    if (!read && !read_ud)
+        return AKS_ERR_NULL_ARG;
+
+    ctx->read = read ? read : aks_read_from_ptr;
+    ctx->read_ud = read_ud;
+
+    return aks_load_font(ctx);
 }

@@ -90,7 +90,7 @@ typedef struct {
     aks_rule_table_t  _rules;
 } akshara_ctx_t;
 
-/* ── Public API ──────────────────────────────────────────────────────────── */
+/* ── C API ───────────────────────────────────────────────────────────────── */
 
 /*
  * Initialise context. Reads and validates header + rule table.
@@ -100,7 +100,7 @@ typedef struct {
  *            Pass NULL when font_data is a pointer to a byte array in
  *            addressable memory (e.g. a .h file included into flash).
  * read_ud  — passed to read on every call; for the NULL-read case, pass
- *            the font array pointer directly (e.g. anek_kannada_aks).
+ *            the font array pointer directly.
  *
  * Returns AKS_OK on success, AKS_ERR_* on failure.
  */
@@ -109,20 +109,66 @@ int akshara_init(akshara_ctx_t *ctx,
                 void         *read_ud, void         *blit_ud);
 
 /*
- * Render a NUL-terminated UTF-8 string starting at pixel (x, y).
- * Returns x position after the last cluster.
+ * Switch to a different .aks font without changing the display callbacks.
+ * Pass NULL read with a const array pointer in read_ud for flash-baked fonts.
+ * Returns AKS_OK on success, AKS_ERR_* on failure.
  */
+int akshara_set_font(akshara_ctx_t *ctx, aks_read_fn read, void *read_ud);
+
+/* Render a NUL-terminated UTF-8 string at (x, y).
+ * Returns x position after the last cluster. */
 int16_t akshara_render(akshara_ctx_t *ctx, int16_t x, int16_t y,
                       const char *utf8);
 
-/*
- * Measure a UTF-8 string without rendering.
- * Returns total advance width in pixels.
- */
+/* Measure a UTF-8 string without rendering. Returns total advance width. */
 int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8);
 
 #ifdef __cplusplus
-}
-#endif
+} /* extern "C" */
 
+/* ── C++ API ─────────────────────────────────────────────────────────────── */
+
+/*
+ * Declare a global instance alongside your display object, then call begin()
+ * once in setup() to load the first font. Use setFont() to switch languages.
+ *
+ *   Akshara akshara(blit_gxepd2, &display);
+ *
+ *   void setup() {
+ *     akshara.setFont(read_sd, &kannada_file);
+ *     akshara.render(0, 0, "ಕನ್ನಡ");
+ *     akshara.setFont(read_sd, &tamil_file);
+ *     akshara.render(0, 24, "தமிழ்");
+ *   }
+ */
+class Akshara {
+public:
+    Akshara(aks_blit_fn blit, void *blit_ud)
+        : _blit(blit), _blit_ud(blit_ud) {}
+
+    /* Load or switch font. Must be called before render() or measure().
+     * Pass NULL read with a const array pointer in read_ud for flash fonts.
+     * Returns AKS_OK on success, AKS_ERR_* on failure. */
+    int setFont(aks_read_fn read, void *read_ud) {
+        return akshara_init(&_ctx, read, _blit, read_ud, _blit_ud);
+    }
+
+    /* Render a NUL-terminated UTF-8 string at (x, y).
+     * Returns the x position after the last cluster. */
+    int16_t render(int16_t x, int16_t y, const char *utf8) {
+        return akshara_render(&_ctx, x, y, utf8);
+    }
+
+    /* Measure a UTF-8 string without rendering. Returns total advance width. */
+    int16_t measure(const char *utf8) {
+        return akshara_measure(&_ctx, utf8);
+    }
+
+private:
+    akshara_ctx_t _ctx;
+    aks_blit_fn   _blit;
+    void         *_blit_ud;
+};
+
+#endif /* __cplusplus */
 #endif /* AKSHARA_H */

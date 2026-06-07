@@ -5,7 +5,7 @@
  * ── How to use ────────────────────────────────────────────────────────────
  *
  * Arduino / PlatformIO / single-file drop-in:
- *   Add akshara.c and akshara.h to your project.  This file pulls in all four
+ *   Add akshara.c and Akshara.h to your project.  This file pulls in all four
  *   implementation files as a unity build.  Do NOT also compile aks_parser.c,
  *   segmenter.c, lookup.c, or blit.c — you will get duplicate symbol errors.
  *

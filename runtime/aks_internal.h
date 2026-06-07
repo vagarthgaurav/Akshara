@@ -1,7 +1,7 @@
 #ifndef AKS_INTERNAL_H
 #define AKS_INTERNAL_H
 
-#include "akshara.h"
+#include "Akshara.h"
 #include <stdbool.h>
 
 /* ── Codepoint classifiers (shared by segmenter.c and blit.c) ────────────── */
