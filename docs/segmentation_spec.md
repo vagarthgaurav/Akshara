@@ -147,6 +147,41 @@ Cluster count target: **~800–1000**
 
 ---
 
+### Telugu
+
+Unicode block: U+0C00–U+0C7F
+
+| Field               | Value                                           |
+|---------------------|-------------------------------------------------|
+| `consonant_start`   | U+0C15 (క KA)                                   |
+| `consonant_end`     | U+0C39 (హ HA; U+0C29 unassigned, skipped)       |
+| `virama`            | U+0C4D (్ virama)                                |
+| `vowel_sign_start`  | U+0C3E (ా AA matra)                              |
+| `vowel_sign_end`    | U+0C4C (ౌ AU matra; virama U+0C4D excl. runtime) |
+| `modifier_start`    | U+0C01 (candrabindu)                            |
+| `modifier_end`      | U+0C03 (ః visarga)                               |
+| `max_conjunct_depth`| 2                                               |
+
+Vowel sign ranges (non-contiguous; U+0C45, U+0C49 unassigned, U+0C4D is virama):
+
+- U+0C3E–U+0C44
+- U+0C46–U+0C48
+- U+0C4A–U+0C4C
+
+Modifiers used in practice:
+
+- U+0C02 anusvara (ం) — extremely common
+- U+0C03 visarga (ః) — Sanskrit loans and common words
+- U+0C01 candrabindu — archaic, rarely enumerated
+
+Only corpus-attested conjuncts are precomputed (from `Indic-script-analysis/`).
+Telugu has rich conjunct formation; `max_conjunct_depth=2` covers three-consonant
+clusters (e.g. ష్ట్ర, స్త్ర).
+
+Cluster count target: **~1200–1500**
+
+---
+
 ### Malayalam
 
 Unicode block: U+0D00–U+0D7F

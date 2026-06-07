@@ -83,16 +83,20 @@ typedef struct __attribute__((packed)) {
 
 ### Values per Script
 
-| Field                | Kannada       | Tamil         | Devanagari              | Malayalam     |
-|----------------------|---------------|---------------|-------------------------|---------------|
-| `consonant_start`    | U+0C95        | U+0B95        | U+0915                  | U+0D15        |
-| `consonant_end`      | U+0CB9        | U+0BB9        | U+0939                  | U+0D39        |
-| `virama`             | U+0CCD        | U+0BCD        | U+094D                  | U+0D4D        |
-| `vowel_sign_start`   | U+0CBE        | U+0BBE        | U+093E                  | U+0D3E        |
-| `vowel_sign_end`     | U+0CCD        | U+0BCC        | U+094C                  | U+0D4C        |
-| `modifier_start`     | U+0C82        | U+0B82        | U+0900                  | U+0D02        |
-| `modifier_end`       | U+0C83        | U+0B83        | U+0903                  | U+0D03        |
-| `max_conjunct_depth` | 2             | 1             | 3                       | 2             |
+| Field                | Kannada       | Tamil         | Devanagari              | Telugu        | Malayalam     |
+|----------------------|---------------|---------------|-------------------------|---------------|---------------|
+| `consonant_start`    | U+0C95        | U+0B95        | U+0915                  | U+0C15        | U+0D15        |
+| `consonant_end`      | U+0CB9        | U+0BB9        | U+0939                  | U+0C39        | U+0D39        |
+| `virama`             | U+0CCD        | U+0BCD        | U+094D                  | U+0C4D        | U+0D4D        |
+| `vowel_sign_start`   | U+0CBE        | U+0BBE        | U+093E                  | U+0C3E        | U+0D3E        |
+| `vowel_sign_end`     | U+0CCD        | U+0BCC        | U+094C                  | U+0C4C        | U+0D4C        |
+| `modifier_start`     | U+0C82        | U+0B82        | U+0900                  | U+0C01        | U+0D02        |
+| `modifier_end`       | U+0C83        | U+0B83        | U+0903                  | U+0C03        | U+0D03        |
+| `max_conjunct_depth` | 2             | 1             | 3                       | 2             | 2             |
+
+Telugu note: `vowel_sign_end` U+0C4C is a coarse range bound; U+0C45 and U+0C49 are
+unassigned and skipped by the host enumerator. U+0C4D (virama) is excluded at runtime.
+U+0C29 (consonant range gap) is unassigned and excluded at host.
 
 Malayalam note: `vowel_sign_end` U+0D4C is a coarse range bound; virama U+0D4D is
 excluded at runtime by the `aks_is_vowel_sign` classifier. Chillu letters
@@ -186,5 +190,8 @@ At 24px with 1bpp this is approximately 1536 bytes.
 validates the output by re-parsing it and comparing `cluster_count` and a sample
 of bitmap offsets before writing is considered complete.
 
-Naming convention: `{font}_{script}_{weight}_{size}px.aks`
-Example: `noto_kannada_regular_24px.aks`
+Naming convention: `{font}_{script}_{weight}_{size}.aks`
+Example: `noto_kannada_regular_22.aks`
+
+Use `host/aks2h.py` to convert a `.aks` binary into a `const uint8_t[]` C header
+for baking directly into firmware flash (no SD card or filesystem required).
