@@ -7,23 +7,28 @@
  * 1. Generate the .aks font files (from the host/ directory):
  *
  *   python akshara_gen.py --font NotoSansKannada-Regular.ttf \
- *                         --script kannada --size 16 --bpp 1 \
- *                         --output noto_kannada_regular_16.aks
+ *                         --script kannada --size 22 --bpp 1 \
+ *                         --output noto_kannada_regular_22.aks
  *   python akshara_gen.py --font NotoSansTamil-Regular.ttf \
- *                         --script tamil --size 16 --bpp 1 \
- *                         --output noto_tamil_regular_16.aks
+ *                         --script tamil --size 22 --bpp 1 \
+ *                         --output noto_tamil_regular_22.aks
  *   python akshara_gen.py --font NotoSansDevanagari-Regular.ttf \
- *                         --script devanagari --size 16 --bpp 1 \
- *                         --output noto_devanagari_regular_16.aks
+ *                         --script devanagari --size 22 --bpp 1 \
+ *                         --output noto_devanagari_regular_22.aks
  *   python akshara_gen.py --font NotoSansTelugu-Regular.ttf \
- *                         --script telugu --size 16 --bpp 1 \
- *                         --output noto_telugu_regular_16.aks
+ *                         --script telugu --size 22 --bpp 1 \
+ *                         --output noto_telugu_regular_22.aks
  *   python akshara_gen.py --font NotoSansMalayalam-Regular.ttf \
- *                         --script malayalam --size 16 --bpp 1 \
- *                         --output noto_malayalam_regular_16.aks
+ *                         --script malayalam --size 22 --bpp 1 \
+ *                         --output noto_malayalam_regular_22.aks
  *
- *   Size 16 fits two script lines on a 128×64 display with room to spare.
- *   Use 24 for larger displays (128×128 or higher).
+ *   Or use the Justfile (size=22 is the default):
+ *     just script=kannada pack && just script=tamil pack && \
+ *     just script=devanagari pack && just script=telugu pack && \
+ *     just script=malayalam pack
+ *
+ *   Size 22 fits two script lines on a 128×64 display (44px content + margins).
+ *   Use size=16 if you need more lines; use 24 for 128×128 or larger displays.
  *
  * 2. Copy all five .aks files to the root of a FAT-formatted SD card.
  *
@@ -99,15 +104,15 @@ struct ScriptEntry {
 };
 
 static const ScriptEntry scripts[] = {
-  { "ಕನ್ನಡ",   "ಭಾರತ ಭೂಮಿ",     "/noto_kannada_regular_16.aks"    },
-  { "தமிழ்",   "இந்தியா",        "/noto_tamil_regular_16.aks"      },
-  { "हिन्दी",  "भारत माता",      "/noto_devanagari_regular_16.aks" },
-  { "తెలుగు",  "భారత దేశం",      "/noto_telugu_regular_16.aks"     },
-  { "മലയാളം", "ഭാരതം",          "/noto_malayalam_regular_16.aks"  },
+  { "ಕನ್ನಡ",   "ಭಾರತ ಭೂಮಿ",     "/noto_kannada_regular_22.aks"    },
+  { "தமிழ்",   "இந்தியா",        "/noto_tamil_regular_22.aks"      },
+  { "हिन्दी",  "भारत माता",      "/noto_devanagari_regular_22.aks" },
+  { "తెలుగు",  "భారత దేశం",      "/noto_telugu_regular_22.aks"     },
+  { "മലയാളം", "ഭാരതം",          "/noto_malayalam_regular_22.aks"  },
 };
 
 static const int NUM_SCRIPTS  = (int)(sizeof(scripts) / sizeof(scripts[0]));
-static const int LINE_HEIGHT   = 18;  // 16px font + 2px leading
+static const int LINE_HEIGHT   = 24;  // 22px font + 2px leading
 static const int MARGIN_X      = 2;
 static const int MARGIN_Y      = 2;
 static const int DISPLAY_MS    = 2500; // ms to show each script

@@ -39,22 +39,27 @@
  * Generate 2bpp .aks files for smooth anti-aliased rendering:
  *
  *   python akshara_gen.py --font NotoSansKannada-Regular.ttf \
- *                         --script kannada --size 20 --bpp 2 \
- *                         --output noto_kannada_regular_20.aks
+ *                         --script kannada --size 22 --bpp 2 \
+ *                         --output noto_kannada_regular_22.aks
  *   python akshara_gen.py --font NotoSansTamil-Regular.ttf \
- *                         --script tamil --size 20 --bpp 2 \
- *                         --output noto_tamil_regular_20.aks
+ *                         --script tamil --size 22 --bpp 2 \
+ *                         --output noto_tamil_regular_22.aks
  *   python akshara_gen.py --font NotoSansDevanagari-Regular.ttf \
- *                         --script devanagari --size 20 --bpp 2 \
- *                         --output noto_devanagari_regular_20.aks
+ *                         --script devanagari --size 22 --bpp 2 \
+ *                         --output noto_devanagari_regular_22.aks
  *   python akshara_gen.py --font NotoSansTelugu-Regular.ttf \
- *                         --script telugu --size 20 --bpp 2 \
- *                         --output noto_telugu_regular_20.aks
+ *                         --script telugu --size 22 --bpp 2 \
+ *                         --output noto_telugu_regular_22.aks
  *   python akshara_gen.py --font NotoSansMalayalam-Regular.ttf \
- *                         --script malayalam --size 20 --bpp 2 \
- *                         --output noto_malayalam_regular_20.aks
+ *                         --script malayalam --size 22 --bpp 2 \
+ *                         --output noto_malayalam_regular_22.aks
  *
- *   Size 20 fits ~14 lines on the 320px axis. Use 24 if you prefer larger text.
+ *   Or use the Justfile (size=22 is the default):
+ *     just script=kannada bpp=2 pack && just script=tamil bpp=2 pack && \
+ *     just script=devanagari bpp=2 pack && just script=telugu bpp=2 pack && \
+ *     just script=malayalam bpp=2 pack
+ *
+ *   Size 22 fits ~12 lines on the 320px axis. Use 24 for slightly larger text.
  *
  * Copy all .aks files to the root of a FAT-formatted SD card.
  *
@@ -134,15 +139,15 @@ struct ScriptEntry {
 };
 
 static const ScriptEntry scripts[] = {
-  { "ಕನ್ನಡ",   "ಭಾರತ ಭೂಮಿ",    "/noto_kannada_regular_20.aks"    },
-  { "தமிழ்",   "இந்தியா",       "/noto_tamil_regular_20.aks"      },
-  { "हिन्दी",  "भारत माता",     "/noto_devanagari_regular_20.aks" },
-  { "తెలుగు",  "భారత దేశం",     "/noto_telugu_regular_20.aks"     },
-  { "മലയാളം", "ഭാരതം",         "/noto_malayalam_regular_20.aks"  },
+  { "ಕನ್ನಡ",   "ಭಾರತ ಭೂಮಿ",    "/noto_kannada_regular_22.aks"    },
+  { "தமிழ்",   "இந்தியா",       "/noto_tamil_regular_22.aks"      },
+  { "हिन्दी",  "भारत माता",     "/noto_devanagari_regular_22.aks" },
+  { "తెలుగు",  "భారత దేశం",     "/noto_telugu_regular_22.aks"     },
+  { "മലയാളം", "ഭാരതം",         "/noto_malayalam_regular_22.aks"  },
 };
 
 static const int NUM_SCRIPTS = (int)(sizeof(scripts) / sizeof(scripts[0]));
-static const int FONT_SIZE   = 20;
+static const int FONT_SIZE   = 22;
 static const int LINE_HEIGHT = FONT_SIZE + 4;   // 4px leading
 static const int MARGIN_X    = 6;
 static const int MARGIN_Y    = 10;

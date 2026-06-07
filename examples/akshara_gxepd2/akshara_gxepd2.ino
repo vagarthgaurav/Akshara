@@ -7,20 +7,25 @@
  * 1. Generate the .aks font files (from the host/ directory):
  *
  *   python akshara_gen.py --font NotoSansKannada-Regular.ttf \
- *                         --script kannada --size 24 --bpp 1 \
- *                         --output noto_kannada_regular_24.aks
+ *                         --script kannada --size 22 --bpp 1 \
+ *                         --output noto_kannada_regular_22.aks
  *   python akshara_gen.py --font NotoSansTamil-Regular.ttf \
- *                         --script tamil --size 24 --bpp 1 \
- *                         --output noto_tamil_regular_24.aks
+ *                         --script tamil --size 22 --bpp 1 \
+ *                         --output noto_tamil_regular_22.aks
  *   python akshara_gen.py --font NotoSansDevanagari-Regular.ttf \
- *                         --script devanagari --size 24 --bpp 1 \
- *                         --output noto_devanagari_regular_24.aks
+ *                         --script devanagari --size 22 --bpp 1 \
+ *                         --output noto_devanagari_regular_22.aks
  *   python akshara_gen.py --font NotoSansTelugu-Regular.ttf \
- *                         --script telugu --size 24 --bpp 1 \
- *                         --output noto_telugu_regular_24.aks
+ *                         --script telugu --size 22 --bpp 1 \
+ *                         --output noto_telugu_regular_22.aks
  *   python akshara_gen.py --font NotoSansMalayalam-Regular.ttf \
- *                         --script malayalam --size 24 --bpp 1 \
- *                         --output noto_malayalam_regular_24.aks
+ *                         --script malayalam --size 22 --bpp 1 \
+ *                         --output noto_malayalam_regular_22.aks
+ *
+ *   Or use the Justfile (size=22 is the default):
+ *     just script=kannada pack && just script=tamil pack && \
+ *     just script=devanagari pack && just script=telugu pack && \
+ *     just script=malayalam pack
  *
  * 2. Copy all five .aks files to the root of a FAT-formatted SD card.
  *
@@ -90,15 +95,15 @@ struct ScriptEntry {
 };
 
 static const ScriptEntry scripts[] = {
-  { "ಕನ್ನಡ",   "/noto_kannada_regular_24.aks"    },
-  { "தமிழ்",   "/noto_tamil_regular_24.aks"      },
-  { "हिन्दी",  "/noto_devanagari_regular_24.aks" },
-  { "తెలుగు",  "/noto_telugu_regular_24.aks"     },
-  { "മലയാളം", "/noto_malayalam_regular_24.aks"  },
+  { "हिन्दी",  "/noto_devanagari_regular_22.aks" },
+  { "ಕನ್ನಡ",   "/noto_kannada_regular_22.aks"    },
+  { "தமிழ்",   "/noto_tamil_regular_22.aks"      },
+  { "తెలుగు",  "/noto_telugu_regular_22.aks"     },
+  { "മലയാളം", "/noto_malayalam_regular_22.aks"  },
 };
 
 static const int NUM_SCRIPTS = sizeof(scripts) / sizeof(scripts[0]);
-static const int LINE_HEIGHT = 24;  // matches --size 24 passed to akshara_gen.py
+static const int LINE_HEIGHT = 24;  // matches --size 22 passed to akshara_gen.py
 static const int MARGIN_X    = 10;
 static const int MARGIN_Y    = 4;
 

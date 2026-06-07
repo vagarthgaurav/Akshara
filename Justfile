@@ -15,7 +15,7 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
           else if script == "malayalam"  { fonts_dir / "original/NotoSansMalayalam-Regular.ttf" } \
           else if script == "telugu"     { fonts_dir / "original/NotoSansTelugu-Regular.ttf" } \
           else                           { "" }
-size        := "24"
+size        := "22"
 bpp         := "1"
 aks         := fonts_dir / ("noto_" + script + "_regular_" + size + ".aks")
 
