@@ -27,6 +27,7 @@ extern "C" {
 #define AKS_SCRIPT_TELUGU     0x04
 #define AKS_SCRIPT_MALAYALAM  0x05
 #define AKS_SCRIPT_BENGALI    0x06
+#define AKS_SCRIPT_GUJARATI   0x07
 
 /* ── .aks file structures (packed; layout must match packer.py byte-for-byte) */
 

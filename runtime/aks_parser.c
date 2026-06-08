@@ -21,7 +21,7 @@ static int aks_read_from_ptr(uint32_t offset, uint8_t *buf,
 
 static bool is_known_script(uint8_t id)
 {
-    return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_BENGALI;
+    return id >= AKS_SCRIPT_KANNADA && id <= AKS_SCRIPT_GUJARATI;
 }
 
 /* Shared by akshara_init and akshara_set_font. Caller must have set ctx->read / read_ud. */

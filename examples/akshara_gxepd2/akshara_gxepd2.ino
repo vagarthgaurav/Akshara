@@ -95,11 +95,13 @@ struct ScriptEntry {
 };
 
 static const ScriptEntry scripts[] = {
-  { "हिन्दी",  "/noto_devanagari_regular_22.aks" },
-  { "ಕನ್ನಡ",   "/noto_kannada_regular_22.aks"    },
-  { "தமிழ்",   "/noto_tamil_regular_22.aks"      },
+  // { "हिन्दी",  "/noto_devanagari_regular_22.aks" },
+  // { "ಕನ್ನಡ",   "/noto_kannada_regular_22.aks"    },
+  // { "தமிழ்",   "/noto_tamil_regular_22.aks"      },
   { "తెలుగు",  "/noto_telugu_regular_22.aks"     },
   { "മലയാളം", "/noto_malayalam_regular_22.aks"  },
+  { "বাংলা", "/noto_bengali_regular_22.aks"  },
+  { "ગુજરાતી", "/noto_gujarati_regular_22.aks"  },
 };
 
 static const int NUM_SCRIPTS = sizeof(scripts) / sizeof(scripts[0]);

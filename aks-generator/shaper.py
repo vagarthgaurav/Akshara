@@ -29,6 +29,8 @@ _SCRIPT_HB: dict[int, tuple[str, str]] = {
     0x03: ("Deva", "hi"),
     0x04: ("Telu", "te"),
     0x05: ("Mlym", "ml"),
+    0x06: ("Beng", "bn"),
+    0x07: ("Gujr", "gu"),
 }
 
 
@@ -127,7 +129,7 @@ def main() -> None:
     parser.add_argument("--font", required=True, help="Path to TTF/OTF font file")
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu"],
+        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu", "bengali", "gujarati"],
     )
     parser.add_argument("--size", type=int, default=24, help="Pixel size")
     parser.add_argument(

@@ -1,0 +1,32 @@
+# Gujarati test strings for render_png.py
+# Format: label<TAB>text
+# Covers: bare consonants, vowel signs, conjuncts, modifiers, digits, punctuation
+
+Gujarati (script name)	ગુજરાતી
+India	ભારત
+Hello/Namaskara	નમસ્કાર
+Thank you	આભાર
+Ahmedabad	અમદાવાદ
+Surat	સુરત
+Vadodara	વડોદરા
+Ramayana	રામાયણ
+Mahabharata	મહાભારત
+Sanskrit	સંસ્કૃત
+Love	પ્રેમ
+Science	વિજ્ઞાન
+Technology	ટેકનોલોજી
+Akshara (letter)	અક્ષર
+Literature	સાહિત્ય
+Music	સંગીત
+Water	પાણી
+Sun	સૂર્ય
+Moon	ચંદ્ર
+Earth	પૃથ્વી
+Sky	આકાશ
+Forest	જંગલ
+River	નદી
+Gold	સોનું
+Silver	ચાંદી
+Script digits	૧૨૩ ગુજરાતી
+ASCII digits	123 ગુજરાતી
+Punctuation	ગુજરાત, ભારત.

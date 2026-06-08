@@ -259,7 +259,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu"],
+        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu", "bengali", "gujarati"],
         help="Target script",
     )
     parser.add_argument(
