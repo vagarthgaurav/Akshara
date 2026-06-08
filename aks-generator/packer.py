@@ -289,7 +289,7 @@ def main() -> None:
     parser.add_argument("--font", required=True, help="Path to TTF/OTF font file")
     parser.add_argument(
         "--script", required=True,
-        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu"],
+        choices=["kannada", "tamil", "devanagari", "malayalam", "telugu", "bengali"],
     )
     parser.add_argument("--size", type=int, default=24, help="Pixel size")
     parser.add_argument("--bpp", type=int, default=1, choices=[1, 2], help="Bits per pixel")

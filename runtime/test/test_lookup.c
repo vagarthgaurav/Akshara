@@ -1,7 +1,7 @@
 /*
  * test_lookup.c — C unit tests for akshara_init() and aks_lookup().
  *
- * Tests mirror the Python TestLookup suite in host/test/render_png.py so
+ * Tests mirror the Python TestLookup suite in aks-generator/test/render_png.py so
  * that the C binary search and the Python reference produce identical results
  * for every covered cluster.
  *

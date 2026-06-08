@@ -1,7 +1,7 @@
 # Akshara Segmentation Spec
 
 This document defines how codepoint sequences are grouped into clusters (aksharas)
-for each supported script. It is the contract between `host/cluster_enum.py` and
+for each supported script. It is the contract between `aks-generator/cluster_enum.py` and
 `runtime/segmenter.c` — both sides must implement these rules identically.
 
 ---
@@ -249,7 +249,7 @@ count target. Skip combinations with near-zero real-world occurrence.
 
 ---
 
-## Unit Test Contract (`host/test/test_clusters.py`)
+## Unit Test Contract (`aks-generator/test/test_clusters.py`)
 
 Every segmenter rule must have a corresponding test. Minimum test cases:
 

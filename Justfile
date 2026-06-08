@@ -1,8 +1,8 @@
-# Akshara host tool recipes
+# Akshara aks-generator tool recipes
 # Run from the project root: just <recipe>
 # Requires: just, uv
 
-host := "host"
+host := "aks-generator"
 fonts_dir := "fonts"
 
 # script is required — always pass it before the recipe name:
@@ -14,6 +14,7 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
           else if script == "devanagari" { fonts_dir / "original/NotoSansDevanagari-Regular.ttf" } \
           else if script == "malayalam"  { fonts_dir / "original/NotoSansMalayalam-Regular.ttf" } \
           else if script == "telugu"     { fonts_dir / "original/NotoSansTelugu-Regular.ttf" } \
+          else if script == "bengali"    { fonts_dir / "original/NotoSansBengali-Regular.ttf" } \
           else                           { "" }
 size        := "22"
 bpp         := "1"
@@ -60,7 +61,7 @@ aks2h array="AKSHARA_FONT" header="noto_{{script}}_regular_{{size}}.h":
 
 # ── Testing ───────────────────────────────────────────────────────────────────
 
-# Run all host-side tests
+# Run all aks-generator tests
 test:
     cd {{host}} && uv run pytest test/ -v
 

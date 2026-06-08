@@ -2,10 +2,10 @@
 Tests for rasterizer.py.
 
 Run as pytest for unit assertions:
-    cd host && uv run pytest test/test_rasterizer.py -v
+    cd aks-generator && uv run pytest test/test_rasterizer.py -v
 
 Run directly to generate a visual PNG grid:
-    cd host && uv run python test/test_rasterizer.py [output.png] [--size N] [--bpp 1|2]
+    cd aks-generator && uv run python test/test_rasterizer.py [output.png] [--size N] [--bpp 1|2]
 
     --size 24          e-paper (default)
     --size 48 --bpp 2  LCD / AMOLED — smooth anti-aliased rendering
@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-# host/ is the package root; tests run with cwd=host/
+# aks-generator/ is the package root; tests run with cwd=aks-generator/
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from rasterizer import Rasterizer, RasterizedCluster, _pack_canvas, rasterize_all

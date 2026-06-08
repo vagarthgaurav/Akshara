@@ -6,7 +6,7 @@ Mimics the MCU pipeline in Python:
   → bitmap blit → PIL image
 
 Run:
-    cd host
+    cd aks-generator
     uv run python test/render_png.py <path.aks> [output.png] --words test/test-words/tamil.txt
     uv run pytest test/render_png.py -v          # headless assertions only (Kannada)
 """

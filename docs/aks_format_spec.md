@@ -186,12 +186,12 @@ At 24px with 1bpp this is approximately 1536 bytes.
 
 ## File Generation
 
-`.aks` files are produced by `host/akshara_gen.py`. The packer (`host/packer.py`)
+`.aks` files are produced by `aks-generator/akshara_gen.py`. The packer (`aks-generator/packer.py`)
 validates the output by re-parsing it and comparing `cluster_count` and a sample
 of bitmap offsets before writing is considered complete.
 
 Naming convention: `{font}_{script}_{weight}_{size}.aks`
 Example: `noto_kannada_regular_22.aks`
 
-Use `host/aks2h.py` to convert a `.aks` binary into a `const uint8_t[]` C header
+Use `aks-generator/aks2h.py` to convert a `.aks` binary into a `const uint8_t[]` C header
 for baking directly into firmware flash (no SD card or filesystem required).

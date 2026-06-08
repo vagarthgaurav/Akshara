@@ -1,13 +1,13 @@
 /*
  * test_segmenter.c — C unit tests for aks_segment_next().
  *
- * Tests mirror the Python TestSegmenter suite in host/test/render_png.py so
+ * Tests mirror the Python TestSegmenter suite in aks-generator/test/render_png.py so
  * that the C segmenter and the Python reference produce identical clusters
  * for every covered input.
  *
  * Compile and run via runtime/test/Makefile.
  *
- * Kannada rule table values are hardcoded from host/scripts/kannada.py and
+ * Kannada rule table values are hardcoded from aks-generator/scripts/kannada.py and
  * match the aks_rule_table_t written into every Kannada .aks file.
  */
 
