@@ -103,6 +103,24 @@ int akshara_set_font(akshara_ctx_t *ctx, aks_read_fn read, void *read_ud)
     return aks_load_font(ctx);
 }
 
+int akshara_get_sizes(akshara_ctx_t *ctx,
+                      aks_size_info_t *out_sizes, uint8_t max_count)
+{
+    if (!ctx || !out_sizes)
+        return AKS_ERR_NULL_ARG;
+
+    uint8_t n = ctx->_hdr.size_count < max_count
+                    ? ctx->_hdr.size_count : max_count;
+    for (uint8_t i = 0; i < n; i++) {
+        aks_size_entry_t e;
+        if (aks_load_size_entry(ctx, i, &e) != AKS_OK)
+            return AKS_ERR_IO;
+        out_sizes[i].size_px = e.size_px;
+        out_sizes[i].weight  = e.weight;
+    }
+    return (int)n;
+}
+
 int akshara_select_size(akshara_ctx_t *ctx, uint8_t size_px, uint8_t weight)
 {
     if (!ctx)

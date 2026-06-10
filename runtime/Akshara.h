@@ -212,6 +212,16 @@ int akshara_set_font(akshara_ctx_t *ctx, aks_read_fn read, void *read_ud);
  */
 int akshara_select_size(akshara_ctx_t *ctx, uint8_t size_px, uint8_t weight);
 
+/*
+ * Fill out_sizes[0..size_count-1] with the available size+weight variants.
+ * out_sizes must point to a caller-allocated array of at least size_count entries
+ * (size_count = ctx->_hdr.size_count, available after akshara_init()).
+ * Returns the number of entries written, or a negative AKS_ERR_* on I/O failure.
+ */
+typedef struct { uint8_t size_px; uint8_t weight; } aks_size_info_t;
+int akshara_get_sizes(akshara_ctx_t *ctx,
+                      aks_size_info_t *out_sizes, uint8_t max_count);
+
 /* Render a NUL-terminated UTF-8 string at (x, y).
  * Calls ctx->blit once per glyph with exact screen coordinates.
  * Returns x position after the last cluster. */
