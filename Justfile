@@ -19,7 +19,7 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
           else                           { "" }
 size        := "22"
 bpp         := "1"
-aks         := fonts_dir / ("noto_" + script + "_regular_" + size + ".aks")
+aks         := fonts_dir / size / ("noto_" + script + "_regular_" + size + ".aks")
 
 # Show available recipes
 default:

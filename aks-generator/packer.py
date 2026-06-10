@@ -137,6 +137,7 @@ def pack(
     weight: 0 = Regular, 1 = Bold.
     """
     output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
     box = get_font_box(font_path, size)
 
     # Sort by codepoint sequence (lexicographic uint32[4] comparison).
