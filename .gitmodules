@@ -1,0 +1,3 @@
+[submodule "aks-generator"]
+	path = aks-generator
+	url = /home/vagarth/Projects/Software/akshara-generator
