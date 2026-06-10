@@ -56,16 +56,16 @@ static const int SD_CS = 10;
 //   https://github.com/olikraus/u8g2/wiki/u8g2setupcpp
 //
 // Common choices:
-//   U8G2_SSD1306_128X64_NONAME_2_HW_I2C  — 128×64 OLED, I²C (most common)
-//   U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C
-//   U8G2_SH1106_128X64_NONAME_2_HW_I2C
-//   U8G2_ST7565_ERC12864_2_4W_HW_SPI     — 128×64 LCD, SPI
-//   U8G2_SSD1327_MIDAS_128X128_2_HW_I2C  — 128×128 OLED (fits all 5 scripts at 24px)
+//   U8G2_SSD1306_128X64_NONAME_F_HW_I2C  — 128×64 OLED, I²C (most common)
+//   U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C
+//   U8G2_SH1106_128X64_NONAME_F_HW_I2C
+//   U8G2_ST7565_ERC12864_F_4W_HW_SPI     — 128×64 LCD, SPI
+//   U8G2_SSD1327_MIDAS_128X128_F_HW_I2C  — 128×128 OLED (fits all 5 scripts at 24px)
 //
-// The _2_ variant (2-page buffer) balances RAM and refresh speed.
-// Replace with _F_ for full frame buffer if you have the RAM.
+// _F_ (full frame buffer) renders everything in one pass — SD reads happen once,
+// not once per page band. Uses 1 KB RAM for 128×64; worth it for SD-backed fonts.
 
-U8G2_SSD1306_128X64_NONAME_2_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 // ── Callbacks ─────────────────────────────────────────────────────────────────
 
@@ -98,54 +98,47 @@ Akshara akshara(blit_u8g2, &u8g2);
 // ── Script table ──────────────────────────────────────────────────────────────
 
 struct ScriptEntry {
-  const char *label;      // script name in its own script
-  const char *sample;     // a short sample phrase
-  const char *filename;   // .aks file on SD card
+  const char *label;     // script name in its own script
+  const char *filename;  // .aks file on SD card
 };
 
 static const ScriptEntry scripts[] = {
-  { "ಕನ್ನಡ",   "ಭಾರತ ಭೂಮಿ",     "/noto_kannada_regular_22.aks"    },
-  { "தமிழ்",   "இந்தியா",        "/noto_tamil_regular_22.aks"      },
-  { "हिन्दी",  "भारत माता",      "/noto_devanagari_regular_22.aks" },
-  { "తెలుగు",  "భారత దేశం",      "/noto_telugu_regular_22.aks"     },
-  { "മലയാളം", "ഭാരതം",          "/noto_malayalam_regular_22.aks"  },
+  { "ಕನ್ನಡ", "/noto_kannada_regular_10.aks" },
+  { "தமிழ்", "/noto_tamil_regular_10.aks" },
+  { "हिन्दी", "/noto_devanagari_regular_10.aks" },
+  { "తెలుగు", "/noto_telugu_regular_10.aks" },
+  { "മലയാളം", "/noto_malayalam_regular_10.aks"  },
+  //{ "বাংলা", "/noto_bengali_regular_10.aks"  },
+  //{ "ગુજરાતી", "/noto_gujarati_regular_10.aks"  },
+
 };
 
-static const int NUM_SCRIPTS  = (int)(sizeof(scripts) / sizeof(scripts[0]));
-static const int LINE_HEIGHT   = 24;  // 22px font + 2px leading
-static const int MARGIN_X      = 2;
-static const int MARGIN_Y      = 2;
-static const int DISPLAY_MS    = 2500; // ms to show each script
+static const int NUM_SCRIPTS = (int)(sizeof(scripts) / sizeof(scripts[0]));
+static const int LINE_HEIGHT = 13;  // matches the 22px .aks font size
 
 // ── State ─────────────────────────────────────────────────────────────────────
-static int   current_script = 0;
-static File  font_file;
+static File font_files[NUM_SCRIPTS];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-static void show_script(int idx) {
-  font_file.close();
-  font_file = SD.open(scripts[idx].filename, FILE_READ);
-  if (!font_file) {
-    Serial.print("Cannot open ");
-    Serial.println(scripts[idx].filename);
-    return;
-  }
-
-  int err = akshara.setFont(read_sd, &font_file);
-  if (err != AKS_OK) {
-    Serial.print("setFont error: ");
-    Serial.println(err);
-    return;
+static void show_all_scripts() {
+  for (int i = 0; i < NUM_SCRIPTS; i++) {
+    font_files[i].close();
+    font_files[i] = SD.open(scripts[i].filename, FILE_READ);
+    if (!font_files[i]) {
+      Serial.print("Cannot open ");
+      Serial.println(scripts[i].filename);
+      return;
+    }
   }
 
   u8g2.firstPage();
   do {
     u8g2.clearBuffer();
-    // Label line (script name)
-    akshara.render(MARGIN_X, MARGIN_Y + LINE_HEIGHT, scripts[idx].label);
-    // Sample phrase on next line
-    akshara.render(MARGIN_X, MARGIN_Y + LINE_HEIGHT * 2, scripts[idx].sample);
+    for (int i = 0; i < NUM_SCRIPTS; i++) {
+      if (akshara.setFont(read_sd, &font_files[i]) == AKS_OK)
+        akshara.render(0, (int16_t)(i * LINE_HEIGHT), scripts[i].label);
+    }
   } while (u8g2.nextPage());
 }
 
@@ -167,11 +160,7 @@ void setup() {
     return;
   }
 
-  show_script(current_script);
+  show_all_scripts();
 }
 
-void loop() {
-  delay(DISPLAY_MS);
-  current_script = (current_script + 1) % NUM_SCRIPTS;
-  show_script(current_script);
-}
+void loop() {}
