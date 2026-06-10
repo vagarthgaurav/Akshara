@@ -87,7 +87,7 @@ static void log_blit(int16_t x, int16_t y, const uint8_t *bmp,
 
 /* ── Path to the generated Kannada .aks file ─────────────────────────────── */
 
-#define AKS_PATH "../../fonts/22/noto_kannada_regular_22.aks"
+#define AKS_PATH "../../fonts/22/noto_kannada_regular.aks"
 
 /* ── UTF-8 test strings ──────────────────────────────────────────────────── */
 

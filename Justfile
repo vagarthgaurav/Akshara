@@ -21,7 +21,7 @@ size        := "22"
 sizes       := ""        # comma-separated pixel sizes (e.g. "16,22,24"); overrides size
 bpp         := "1"
 font_bold   := ""        # path to Bold weight font; enables Bold section in output
-aks         := fonts_dir / size / ("noto_" + script + "_regular_" + size + ".aks")
+aks         := fonts_dir / size / ("noto_" + script + "_regular.aks")
 text        := ""
 
 # Show available recipes

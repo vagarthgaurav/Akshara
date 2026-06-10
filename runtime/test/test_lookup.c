@@ -57,7 +57,7 @@ static void no_blit(int16_t x, int16_t y, const uint8_t *bmp,
 
 /* Run tests from runtime/test/ so this relative path resolves correctly.
  * Generate with: just script=kannada pack  (default size is 22px) */
-#define AKS_PATH "../../fonts/22/noto_kannada_regular_22.aks"
+#define AKS_PATH "../../fonts/22/noto_kannada_regular.aks"
 
 /* ── akshara_init tests ───────────────────────────────────────────────────── */
 
