@@ -2,7 +2,7 @@
 # Run from the project root: just <recipe>
 # Requires: just, uv
 
-host := "aks-generator"
+host := "akshara-generator"
 fonts_dir := "fonts"
 
 # script is required — always pass it before the recipe name:
@@ -20,6 +20,7 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
 size        := "22"
 bpp         := "1"
 aks         := fonts_dir / size / ("noto_" + script + "_regular_" + size + ".aks")
+text        := ""
 
 # Show available recipes
 default:
@@ -59,6 +60,15 @@ build-and-render text="ನಮಸ್ಕಾರ ಕನ್ನಡ" out="out.png": pac
 aks2h array="AKSHARA_FONT" header="noto_{{script}}_regular_{{size}}.h":
     cd {{host}} && uv run python aks2h.py \
         ../{{aks}} {{array}} > ../examples/akshara_gxepd2/{{header}}
+
+# Render a plain-text book file as paginated PNGs (flowing text with word wrap)
+# Usage: just script=kannada text=/path/to/book.txt render-book
+#        just script=kannada text=/path/to/book.txt pages=50 out-dir=/tmp/pages render-book
+render-book out-dir="/tmp/aks_book" pages="20":
+    cd {{host}} && uv run python test/render_book.py \
+        ../{{aks}} {{text}} \
+        --out-dir {{out-dir}} \
+        --pages {{pages}}
 
 # ── Testing ───────────────────────────────────────────────────────────────────
 
