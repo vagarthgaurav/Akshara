@@ -17,11 +17,10 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
           else if script == "bengali"    { fonts_dir / "original/NotoSansBengali-Regular.ttf" } \
           else if script == "gujarati"    { fonts_dir / "original/NotoSansGujarati-Regular.ttf" } \
           else                           { "" }
-size        := "22"
-sizes       := ""        # comma-separated pixel sizes (e.g. "16,22,24"); overrides size
+sizes       := ""        # comma-separated pixel sizes (e.g. "16,22,24"); e.g. just script=kannada sizes=16,22 pack
 bpp         := "1"
 font_bold   := ""        # path to Bold weight font; enables Bold section in output
-aks         := fonts_dir / size / ("noto_" + script + "_regular.aks")
+aks         := fonts_dir / "generated" / ("noto_" + script + "_regular.aks")
 text        := ""
 
 # Show available recipes
@@ -32,7 +31,6 @@ default:
 
 # Generate clusters, shape, rasterize, and pack a .aks file
 # Usage: just script=tamil pack
-#        just script=tamil size=16 pack
 #        just script=tamil sizes=16,22,24 pack
 #        just script=kannada font_bold=fonts/original/NotoSansKannada-Bold.ttf sizes=16,22 pack
 pack:
@@ -40,13 +38,12 @@ pack:
         --font ../{{font}} \
         {{if font_bold != "" { "--font-bold ../" + font_bold } else { "" }}} \
         --script {{script}} \
-        {{if sizes != "" { "--sizes " + sizes } else { "--size " + size }}} \
+        {{if sizes != "" { "--sizes " + sizes } else { "" }}} \
         --bpp {{bpp}} \
         --output ../{{aks}}
 
 # Render a string to PNG using a .aks file (validates the packed output)
 # Usage: just script=tamil render
-#        just script=tamil size=16 render
 render out="out.png":
     cd {{host}} && uv run python test/render_png.py \
         ../{{aks}} ../{{out}} \
@@ -60,8 +57,8 @@ build-and-render text="ನಮಸ್ಕಾರ ಕನ್ನಡ" out="out.png": pac
 
 # Convert a .aks file to a C header for baking into firmware flash
 # Usage: just script=tamil aks2h
-#        just script=tamil size=16 aks2h array=NOTO_TAMIL_16
-aks2h array="AKSHARA_FONT" header="noto_{{script}}_regular_{{size}}.h":
+#        just script=kannada aks2h array=NOTO_KANNADA
+aks2h array="AKSHARA_FONT" header="noto_{{script}}_regular.h":
     cd {{host}} && uv run python aks2h.py \
         ../{{aks}} {{array}} > ../examples/akshara_gxepd2/{{header}}
 
@@ -99,6 +96,5 @@ install:
 vars:
     @echo "font:   {{font}}"
     @echo "script: {{script}}"
-    @echo "size:   {{size}}"
     @echo "bpp:    {{bpp}}"
     @echo "aks:    {{aks}}"
