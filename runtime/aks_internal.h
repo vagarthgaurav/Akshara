@@ -13,8 +13,7 @@ static inline bool aks_is_consonant(uint32_t cp, const aks_rule_table_t *r)
 
 /*
  * Excludes virama explicitly: for Kannada, virama == vowel_sign_end, so the
- * coarse range would otherwise match it.  Harmless for Tamil/Devanagari where
- * virama falls outside the vowel sign range, but consistent across scripts.
+ * coarse range would otherwise match it.
  */
 static inline bool aks_is_vowel_sign(uint32_t cp, const aks_rule_table_t *r)
 {
@@ -43,14 +42,21 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
                      uint32_t cluster[6]);
 
 /*
- * Binary-search the cluster key table for cp[6] via ctx->read.
+ * Binary-search the cluster key table for the uint32_t cp[6] via ctx->read.
+ * The on-disk key table stores uint16_t cp[6]; codepoints are BMP-only.
  *
  * Returns:
- *   AKS_OK  : hit; *out is filled with the matching entry
+ *   AKS_OK  : hit; *out is filled with the matching aks_key_entry_t
  *   1       : miss (cluster not in table — OOV)
  *   AKS_ERR_IO : read callback failed
  */
 int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
                aks_key_entry_t *out);
+
+/*
+ * Load the size directory entry at index idx into *out.
+ */
+int aks_load_size_entry(const akshara_ctx_t *ctx, uint8_t idx,
+                        aks_size_entry_t *out);
 
 #endif /* AKS_INTERNAL_H */

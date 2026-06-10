@@ -18,7 +18,9 @@ font        := if script == "kannada"    { fonts_dir / "original/NotoSansKannada
           else if script == "gujarati"    { fonts_dir / "original/NotoSansGujarati-Regular.ttf" } \
           else                           { "" }
 size        := "22"
+sizes       := ""        # comma-separated pixel sizes (e.g. "16,22,24"); overrides size
 bpp         := "1"
+font_bold   := ""        # path to Bold weight font; enables Bold section in output
 aks         := fonts_dir / size / ("noto_" + script + "_regular_" + size + ".aks")
 text        := ""
 
@@ -31,12 +33,14 @@ default:
 # Generate clusters, shape, rasterize, and pack a .aks file
 # Usage: just script=tamil pack
 #        just script=tamil size=16 pack
-#        just script=tamil font=fonts/original/NotoSansTamil-Regular.ttf pack
+#        just script=tamil sizes=16,22,24 pack
+#        just script=kannada font_bold=fonts/original/NotoSansKannada-Bold.ttf sizes=16,22 pack
 pack:
     cd {{host}} && uv run python packer.py \
         --font ../{{font}} \
+        {{if font_bold != "" { "--font-bold ../" + font_bold } else { "" }}} \
         --script {{script}} \
-        --size {{size}} \
+        {{if sizes != "" { "--sizes " + sizes } else { "--size " + size }}} \
         --bpp {{bpp}} \
         --output ../{{aks}}
 

@@ -1,21 +1,29 @@
 /*
  * lookup.c — binary search over the sorted cluster key table.
  *
- * The key table is never loaded into RAM.  Each binary search step reads
- * one 32-byte aks_key_entry_t from the .aks file via ctx->read.
- * For 1317 clusters this is at most ceil(log2(1317)) = 11 reads per lookup.
- * For flash-backed fonts (read_flash = memcpy) each read is essentially free.
+ * The key table is never loaded into RAM.  Each step reads one 16-byte
+ * aks_key_entry_t via ctx->read.  For 1424 clusters: ceil(log2(1424)) = 11
+ * reads per lookup.  For flash-baked fonts (read = memcpy) each read is free.
+ *
+ * Key table format (v3): sorted uint16_t cp[6] + uint32_t comp_off.
+ * All Indic codepoints are BMP (≤ U+FFFF), so uint16_t is sufficient.
+ * The segmenter produces uint32_t cp[6]; we compare against uint16_t on-disk.
  */
 
 #include "aks_internal.h"
 #include <string.h>
 
-/* Lexicographic comparison of two uint32_t[6] codepoint arrays. */
-static int cp6_cmp(const uint32_t a[6], const uint32_t b[6])
+/*
+ * Compare a uint32_t[6] key (from segmenter) against a uint16_t[6] entry
+ * (from the file).  Lexicographic comparison.
+ */
+static int cp6_cmp(const uint32_t key[6], const uint16_t entry[6])
 {
     for (int i = 0; i < 6; i++) {
-        if (a[i] < b[i]) return -1;
-        if (a[i] > b[i]) return  1;
+        uint32_t a = key[i];
+        uint32_t b = (uint32_t)entry[i];
+        if (a < b) return -1;
+        if (a > b) return  1;
     }
     return 0;
 }
@@ -38,11 +46,13 @@ int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
                       ctx->read_ud) != 0)
             return AKS_ERR_IO;
 
-        uint32_t entry_cp[6];
-        memcpy(entry_cp, out->cp, sizeof(entry_cp));
-        int cmp = cp6_cmp(entry_cp, cp);
+        /* Copy cp[] out of the packed struct before passing by pointer so that
+         * the comparison is safe on architectures that forbid unaligned reads. */
+        uint16_t disk_cp[6];
+        memcpy(disk_cp, out->cp, sizeof(disk_cp));
+        int cmp = cp6_cmp(cp, disk_cp);
         if (cmp == 0) return AKS_OK;
-        if (cmp < 0) {
+        if (cmp > 0) {
             lo = mid + 1;
         } else {
             if (mid == 0) break;  /* guard against uint32_t underflow */
