@@ -22,6 +22,9 @@ bpp         := "1"
 font_bold   := ""        # path to Bold weight font; enables Bold section in output
 aks         := fonts_dir / "generated" / ("noto_" + script + "_regular.aks")
 text        := ""
+size        := ""        # font size in px for render-book (e.g. just size=22 render-book)
+weight      := "0"       # font weight for render-book: 0=Regular 1=Bold
+render_bpp  := ""        # bpp for render-book: 1 or 2 (default: any matching size+weight)
 
 # Show available recipes
 default:
@@ -64,12 +67,17 @@ aks2h array="AKSHARA_FONT" header="noto_{{script}}_regular.h":
 
 # Render a plain-text book file as paginated PNGs (flowing text with word wrap)
 # Usage: just script=kannada text=/path/to/book.txt render-book
-#        just script=kannada text=/path/to/book.txt pages=50 out-dir=/tmp/pages render-book
-render-book out-dir="/tmp/aks_book" pages="20":
+#        just script=kannada text=/path/to/book.txt size=22 pages=50 out-dir=/tmp/pages render-book
+#        just script=kannada text=/path/to/book.txt size=22 weight=1 render-book  # Bold
+#        just script=kannada text=/path/to/book.txt size=22 render_bpp=2 render-book  # 2bpp
+render-book out-dir="/tmp/aks_book" pages="5":
     cd {{host}} && uv run python test/render_book.py \
         ../{{aks}} {{text}} \
         --out-dir {{out-dir}} \
-        --pages {{pages}}
+        --pages {{pages}} \
+        {{ if size != "" { "--size " + size } else { "" } }} \
+        --weight {{weight}} \
+        {{ if render_bpp != "" { "--bpp " + render_bpp } else { "" } }}
 
 # ── Testing ───────────────────────────────────────────────────────────────────
 
