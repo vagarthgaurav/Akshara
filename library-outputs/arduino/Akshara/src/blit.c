@@ -80,9 +80,13 @@ static int16_t render_comp(akshara_ctx_t *ctx,
 
     for (uint8_t i = 0; i < glyph_count; i++) {
         /* Read one comp entry (8 bytes). */
-        aks_comp_entry_t ce;
+        aks_comp_entry_t ce = {0};
         uint32_t ce_off = abs_comp + 2u + (uint32_t)i * (uint32_t)sizeof(aks_comp_entry_t);
         if (ctx->read(ce_off, (uint8_t *)&ce, sizeof(ce), ctx->read_ud) != 0)
+            goto advance;
+
+        /* Reject out-of-range glyph index from a corrupt composition table. */
+        if (ce.glyph_idx >= sz->glyph_count)
             goto advance;
 
         if (do_blit) {
@@ -136,7 +140,8 @@ static int16_t render_comp(akshara_ctx_t *ctx,
         }
 
 advance:
-        pen_x = (int16_t)(pen_x + du_to_px((int16_t)ce.hb_advance, sz->size_px, sz->upem));
+        /* Scale advance as uint32 to avoid sign-flip on hb_advance values ≥ 32768. */
+        pen_x = (int16_t)(pen_x + (int16_t)((uint32_t)ce.hb_advance * sz->size_px / sz->upem));
     }
 
     return pen_x;
@@ -190,7 +195,8 @@ int16_t akshara_render(akshara_ctx_t *ctx, int16_t x, int16_t y,
     uint32_t cluster[6];
     int n;
 
-    while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) > 0) {
+    while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) != 0) {
+        if (n < 0) break;  /* malformed UTF-8 — stop silently; akshara_render can't propagate errors */
         aks_key_entry_t e;
         if (aks_lookup(ctx, cluster, &e) == AKS_OK)
             x = (int16_t)(x + render_comp(ctx, x, y, e.comp_off, true));
@@ -210,7 +216,8 @@ int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8)
     int16_t x = 0;
     int n;
 
-    while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) > 0) {
+    while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) != 0) {
+        if (n < 0) break;  /* malformed UTF-8 */
         aks_key_entry_t e;
         if (aks_lookup(ctx, cluster, &e) == AKS_OK)
             x = (int16_t)(x + render_comp(ctx, x, 0, e.comp_off, false));

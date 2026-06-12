@@ -56,13 +56,19 @@ static int aks_load_font(akshara_ctx_t *ctx)
     /* Validate that declared section offsets are internally consistent. */
     uint32_t expected_rule   = (uint32_t)sizeof(aks_header_t);
     uint32_t expected_lookup = expected_rule + (uint32_t)sizeof(aks_rule_table_t);
+
+    /* Guard against cluster_count × 16 overflowing uint32_t on a corrupt file. */
+    if (ctx->_hdr.cluster_count > UINT32_MAX / (uint32_t)sizeof(aks_key_entry_t))
+        return AKS_ERR_TRUNCATED;
+
     uint32_t expected_comp   = expected_lookup +
                                ctx->_hdr.cluster_count *
                                (uint32_t)sizeof(aks_key_entry_t);
 
-    if (ctx->_hdr.rule_offset   != expected_rule   ||
-        ctx->_hdr.lookup_offset != expected_lookup  ||
-        ctx->_hdr.comp_offset   != expected_comp)
+    if (ctx->_hdr.rule_offset   != expected_rule    ||
+        ctx->_hdr.lookup_offset != expected_lookup   ||
+        ctx->_hdr.comp_offset   != expected_comp     ||
+        ctx->_hdr.sizes_offset  <= expected_comp)
         return AKS_ERR_TRUNCATED;
 
     if (ctx->read(ctx->_hdr.rule_offset, (uint8_t *)&ctx->_rules,

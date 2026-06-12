@@ -44,6 +44,12 @@ pack:
         {{if sizes != "" { "--sizes " + sizes } else { "" }}} \
         --bpp {{bpp}} \
         --output ../{{aks}}
+    just sync-arduino
+
+# Sync runtime/ C source files into the Arduino library package.
+# Run this after any edit to runtime/ to keep the two copies identical.
+sync-arduino:
+    cp runtime/Akshara.h runtime/aks_internal.h runtime/aks_parser.c runtime/segmenter.c runtime/lookup.c runtime/blit.c library-outputs/arduino/Akshara/src/
 
 # Render a string to PNG using a .aks file (validates the packed output)
 # Usage: just script=tamil render
