@@ -172,14 +172,14 @@ static void test_lookup_oov_latin(akshara_ctx_t *ctx)
     /* Latin A is not in the Kannada .aks */
     uint32_t cp[6] = {0x0041u, 0, 0, 0, 0, 0};
     aks_key_entry_t e;
-    CHECK(aks_lookup(ctx, cp, &e) == 1);
+    CHECK(aks_lookup(ctx, cp, &e) == AKS_ERR_NOT_FOUND);
 }
 
 static void test_lookup_oov_impossible_sequence(akshara_ctx_t *ctx)
 {
     uint32_t cp[6] = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
     aks_key_entry_t e;
-    CHECK(aks_lookup(ctx, cp, &e) == 1);
+    CHECK(aks_lookup(ctx, cp, &e) == AKS_ERR_NOT_FOUND);
 }
 
 static void test_lookup_vowel_sign(akshara_ctx_t *ctx)

@@ -35,7 +35,7 @@
 /* Max glyphs per cluster composition block (depth-2 conjunct + marks). */
 #define AKS_MAX_COMP_DEPTH 8
 
-/* Scale design units to pixels: round((int32_t)du * size_px / upem). */
+/* Scale design units to pixels: truncate toward zero ((int32_t)du * size_px / upem). */
 static int16_t du_to_px(int16_t du, uint16_t size_px, uint16_t upem)
 {
     if (upem == 0) return 0;
@@ -76,7 +76,7 @@ static int16_t render_comp(akshara_ctx_t *ctx,
     if (glyph_count > AKS_MAX_COMP_DEPTH)
         glyph_count = AKS_MAX_COMP_DEPTH;  /* safety clamp */
 
-    int16_t pen_x = 0;
+    int32_t pen_x = 0;
 
     for (uint8_t i = 0; i < glyph_count; i++) {
         /* Read one comp entry (8 bytes). */
@@ -130,21 +130,21 @@ static int16_t render_comp(akshara_ctx_t *ctx,
              */
             int16_t hb_x_px = du_to_px(ce.hb_x_off, sz->size_px, sz->upem);
             int16_t hb_y_px = du_to_px(ce.hb_y_off, sz->size_px, sz->upem);
-            int16_t blit_x  = (int16_t)(x + pen_x + hb_x_px + (int8_t)gm.bearing_x);
-            int16_t blit_y  = (int16_t)(y + (int16_t)sz->baseline
-                                        - (int16_t)(int8_t)gm.top_from_base
-                                        - hb_y_px);
+            int32_t blit_x  = (int32_t)x + pen_x + (int32_t)hb_x_px
+                              + (int32_t)(int8_t)gm.bearing_x;
+            int32_t blit_y  = (int32_t)y + (int32_t)sz->baseline
+                              - (int32_t)(int8_t)gm.top_from_base
+                              - (int32_t)hb_y_px;
 
-            ctx->blit(blit_x, blit_y, scratch,
+            ctx->blit((int16_t)blit_x, (int16_t)blit_y, scratch,
                       gm.width, gm.height, sz->bpp, ctx->blit_ud);
         }
 
 advance:
-        /* Scale advance as uint32 to avoid sign-flip on hb_advance values ≥ 32768. */
-        pen_x = (int16_t)(pen_x + (int16_t)((uint32_t)ce.hb_advance * sz->size_px / sz->upem));
+        pen_x += (int32_t)((uint32_t)ce.hb_advance * sz->size_px / sz->upem);
     }
 
-    return pen_x;
+    return (int16_t)pen_x;
 }
 
 /*
@@ -156,7 +156,7 @@ advance:
  * consonant of an OOV conjunct (e.g. ಸ್ಕಾ falls back to ಸ + ್ + ಕಾ).
  * If the pair is also absent, both codepoints fall through to single lookups.
  */
-static int16_t oov_fallback(akshara_ctx_t *ctx, int16_t x, int16_t y,
+static int32_t oov_fallback(akshara_ctx_t *ctx, int32_t x, int16_t y,
                              const uint32_t cluster[6], bool do_blit)
 {
     const aks_rule_table_t *r = &ctx->_rules;
@@ -170,7 +170,7 @@ static int16_t oov_fallback(akshara_ctx_t *ctx, int16_t x, int16_t y,
              aks_is_modifier(cluster[i + 1], r))) {
             uint32_t pair[6] = {cp, cluster[i + 1], 0u, 0u, 0u, 0u};
             if (aks_lookup(ctx, pair, &e) == AKS_OK) {
-                x = (int16_t)(x + render_comp(ctx, x, y, e.comp_off, do_blit));
+                x += render_comp(ctx, (int16_t)x, y, e.comp_off, do_blit);
                 i++;  /* sign was consumed by the pair */
                 continue;
             }
@@ -178,7 +178,7 @@ static int16_t oov_fallback(akshara_ctx_t *ctx, int16_t x, int16_t y,
 
         uint32_t single[6] = {cp, 0u, 0u, 0u, 0u, 0u};
         if (aks_lookup(ctx, single, &e) == AKS_OK)
-            x = (int16_t)(x + render_comp(ctx, x, y, e.comp_off, do_blit));
+            x += render_comp(ctx, (int16_t)x, y, e.comp_off, do_blit);
         /* miss: skip silently — never show a missing-glyph box */
     }
     return x;
@@ -191,20 +191,21 @@ int16_t akshara_render(akshara_ctx_t *ctx, int16_t x, int16_t y,
 {
     if (!ctx || !utf8) return x;
 
+    int32_t x_acc = (int32_t)x;
     const char *p = utf8;
     uint32_t cluster[6];
     int n;
 
     while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) != 0) {
-        if (n < 0) break;  /* malformed UTF-8 — stop silently; akshara_render can't propagate errors */
+        if (n < 0) break;  /* malformed UTF-8 — stop silently */
         aks_key_entry_t e;
         if (aks_lookup(ctx, cluster, &e) == AKS_OK)
-            x = (int16_t)(x + render_comp(ctx, x, y, e.comp_off, true));
+            x_acc += render_comp(ctx, (int16_t)x_acc, y, e.comp_off, true);
         else
-            x = oov_fallback(ctx, x, y, cluster, true);
+            x_acc = oov_fallback(ctx, x_acc, y, cluster, true);
     }
 
-    return x;
+    return (int16_t)x_acc;
 }
 
 int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8)
@@ -213,17 +214,17 @@ int16_t akshara_measure(akshara_ctx_t *ctx, const char *utf8)
 
     const char *p = utf8;
     uint32_t cluster[6];
-    int16_t x = 0;
+    int32_t x_acc = 0;
     int n;
 
     while ((n = aks_segment_next(&p, &ctx->_rules, cluster)) != 0) {
         if (n < 0) break;  /* malformed UTF-8 */
         aks_key_entry_t e;
         if (aks_lookup(ctx, cluster, &e) == AKS_OK)
-            x = (int16_t)(x + render_comp(ctx, x, 0, e.comp_off, false));
+            x_acc += render_comp(ctx, (int16_t)x_acc, 0, e.comp_off, false);
         else
-            x = oov_fallback(ctx, x, 0, cluster, false);
+            x_acc = oov_fallback(ctx, x_acc, 0, cluster, false);
     }
 
-    return x;
+    return (int16_t)x_acc;
 }

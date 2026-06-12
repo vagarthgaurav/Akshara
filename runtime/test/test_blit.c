@@ -354,6 +354,28 @@ static void test_oov_conjunct_vowel_sign_paired(akshara_ctx_t *ctx)
     CHECK(log.call_count >= 4);  /* at minimum: ನ, ಮ, ಕ (or ಕಾ), ರ */
 }
 
+/* ── Malformed UTF-8 robustness ───────────────────────────────────────────── */
+
+static void test_render_malformed_utf8(akshara_ctx_t *ctx)
+{
+    /*
+     * Valid ಕ (3 bytes), then 0xFF (invalid UTF-8 start byte), then valid ಕ.
+     * akshara_render must: render the first ಕ, stop at 0xFF without crashing,
+     * and not render the second ಕ.
+     */
+    char bad[] = {'\xe0', '\xb2', '\x95', '\xff', '\xe0', '\xb2', '\x95', '\0'};
+    blit_log_t log = {0};
+    ctx->blit_ud = &log;
+    int16_t end_x = akshara_render(ctx, 0, 0, bad);
+
+    /* First ಕ must have rendered; second ಕ must not (stopped at 0xFF). */
+    CHECK(log.call_count >= 1);
+    CHECK(end_x > 0);
+
+    /* Measure must also stop at the bad byte, not crash. */
+    CHECK(akshara_measure(ctx, bad) > 0);
+}
+
 /* ── Main ────────────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -411,6 +433,7 @@ int main(void)
     test_render_oov_no_crash(&ctx);
     test_measure_oov_zero(&ctx);
     test_oov_conjunct_vowel_sign_paired(&ctx);
+    test_render_malformed_utf8(&ctx);
 
     fclose(f);
 

@@ -12,6 +12,16 @@
 #include "aks_internal.h"
 #include <string.h>
 
+/* Verify packed struct sizes match what packer.py writes.
+ * A mismatch means the C and Python layouts have diverged — catch it at
+ * compile time rather than silently producing garbage at runtime. */
+_Static_assert(sizeof(aks_header_t)        == 28, "aks_header_t must be 28 bytes");
+_Static_assert(sizeof(aks_rule_table_t)    == 32, "aks_rule_table_t must be 32 bytes");
+_Static_assert(sizeof(aks_key_entry_t)     == 16, "aks_key_entry_t must be 16 bytes");
+_Static_assert(sizeof(aks_comp_entry_t)    ==  8, "aks_comp_entry_t must be 8 bytes");
+_Static_assert(sizeof(aks_size_entry_t)    == 24, "aks_size_entry_t must be 24 bytes");
+_Static_assert(sizeof(aks_glyph_metrics_t) ==  4, "aks_glyph_metrics_t must be 4 bytes");
+
 #define AKS_MAGIC   0x414B5348u  /* "AKSH" */
 #define AKS_VERSION 3u
 

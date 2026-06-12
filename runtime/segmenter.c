@@ -31,6 +31,9 @@
  * Decode one codepoint from *p, advancing *p past the consumed bytes.
  * Returns the codepoint (≥ 0), 0 at end of string, AKS_ERR_INVALID_UTF8 on
  * a bad byte sequence.
+ *
+ * Assumes the input is NUL-terminated.  Continuation bytes are read without
+ * a length bound; the NUL sentinel prevents reads past the end of the string.
  */
 static int32_t utf8_next(const char **p)
 {

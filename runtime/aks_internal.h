@@ -46,9 +46,9 @@ int aks_segment_next(const char **utf8, const aks_rule_table_t *rules,
  * The on-disk key table stores uint16_t cp[6]; codepoints are BMP-only.
  *
  * Returns:
- *   AKS_OK  : hit; *out is filled with the matching aks_key_entry_t
- *   1       : miss (cluster not in table — OOV)
- *   AKS_ERR_IO : read callback failed
+ *   AKS_OK            : hit; *out is filled with the matching aks_key_entry_t
+ *   AKS_ERR_NOT_FOUND : miss (cluster not in table — OOV)
+ *   AKS_ERR_IO        : read callback failed
  */
 int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
                aks_key_entry_t *out);

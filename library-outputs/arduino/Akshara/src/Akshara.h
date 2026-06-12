@@ -92,7 +92,7 @@ typedef struct __attribute__((packed)) {
  * Composition entry — 8 bytes.
  * Stored per-glyph within a cluster's composition block.
  * Positions are in font design units (size-independent); the MCU scales them
- * to pixels at render time via: pixels = round(du * size_px / upem).
+ * to pixels at render time via: pixels = du * size_px / upem  (truncated toward zero).
  */
 typedef struct __attribute__((packed)) {
     uint16_t glyph_idx;      /* index into per-size glyph store */

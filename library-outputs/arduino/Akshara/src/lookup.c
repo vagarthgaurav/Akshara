@@ -32,7 +32,7 @@ int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
                aks_key_entry_t *out)
 {
     if (ctx->_hdr.cluster_count == 0)
-        return 1;  /* empty table — miss */
+        return AKS_ERR_NOT_FOUND;  /* empty table — miss */
 
     uint32_t lo = 0;
     uint32_t hi = ctx->_hdr.cluster_count - 1;
@@ -60,5 +60,5 @@ int aks_lookup(const akshara_ctx_t *ctx, const uint32_t cp[6],
         }
     }
 
-    return 1;  /* miss */
+    return AKS_ERR_NOT_FOUND;  /* miss */
 }
