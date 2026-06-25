@@ -1,15 +1,15 @@
-# .aks File Format Spec — v3
+# .aks format spec v3
 
-One `.aks` file per **script**, containing **all size+weight variants** for that script.
+One `.aks` file per script, containing all size+weight variants for that script.
 Examples: `noto_kannada_regular.aks`, `noto_tamil_regular.aks`
 
 The format is script-agnostic. Script-specific rules are embedded as a rule table
-inside the file — the MCU has one generic segmenter that reads rules from the file.
-Adding a new Indic script requires only a new `.aks` — no firmware change.
+inside the file; the MCU has one generic segmenter that reads rules from the file.
+Adding a new Indic script requires only a new `.aks` file; no firmware change.
 
 ---
 
-## File Layout
+## File layout
 
 ```text
 [ Header              ]  28 bytes, fixed
@@ -23,7 +23,7 @@ Adding a new Indic script requires only a new `.aks` — no firmware change.
   [ Bitmap Store      ]  packed per-glyph bitmaps  (at bitmaps_offset)
 ```
 
-Cluster key table and composition table are **shared** across all size+weight variants
+Cluster key table and composition table are shared across all size+weight variants
 (shaping is weight- and size-independent). Only glyph bitmaps differ per size+weight.
 
 ---
@@ -61,14 +61,14 @@ typedef struct __attribute__((packed)) {
 
 On `akshara_init`, the parser must verify:
 
-- `magic == 0x414B5348` — else `AKS_ERR_BAD_MAGIC`
-- `version == 3` — else `AKS_ERR_BAD_VERSION`
-- `script_id` is a known value — else `AKS_ERR_BAD_SCRIPT`
-- File is large enough for all declared sections — else `AKS_ERR_TRUNCATED`
+- `magic == 0x414B5348`, else `AKS_ERR_BAD_MAGIC`
+- `version == 3`, else `AKS_ERR_BAD_VERSION`
+- `script_id` is a known value, else `AKS_ERR_BAD_SCRIPT`
+- File is large enough for all declared sections, else `AKS_ERR_TRUNCATED`
 
 ---
 
-## Rule Table
+## Rule table
 
 At `rule_offset`. The generic segmenter reads this at init. Unchanged from v2.
 
@@ -86,7 +86,7 @@ typedef struct __attribute__((packed)) {
 } aks_rule_table_t;               // 32 bytes
 ```
 
-### Values per Script
+### Values per script
 
 | Field                | Kannada  | Tamil    | Devanagari | Telugu   | Malayalam | Bengali  | Gujarati |
 |----------------------|----------|----------|------------|----------|-----------|----------|----------|
@@ -105,15 +105,15 @@ U+0C29 (consonant range gap) is unassigned and excluded at host.
 
 Malayalam note: `vowel_sign_end` U+0D4C is a coarse range bound; virama U+0D4D is
 excluded at runtime by the `aks_is_vowel_sign` classifier. Chillu letters
-(U+0D7A–U+0D7F) fall outside the consonant range and are treated as single-codepoint
-clusters naturally — no rule table extension required.
+(U+0D7A-U+0D7F) fall outside the consonant range and are treated as single-codepoint
+clusters naturally; no rule table extension required.
 
 ---
 
-## Cluster Key Table
+## Cluster key table
 
-At `lookup_offset`. Sorted lexicographically by `cp[6]` for binary search. **16 bytes
-per entry** (was 32 in v2). All Indic codepoints are in the BMP (U+0000–U+FFFF),
+At `lookup_offset`. Sorted lexicographically by `cp[6]` for binary search, 16 bytes
+per entry (was 32 in v2). All Indic codepoints are in the BMP (U+0000-U+FFFF),
 so `uint16_t` suffices.
 
 ```c
@@ -127,24 +127,24 @@ Maximum cluster depth: 6 codepoints. Covers depth-2 conjuncts
 (C + virama + C + virama + C = 5 slots) plus one vowel sign or modifier (6 slots).
 Shorter clusters zero-pad from the right.
 
-### Sort Order
+### Sort order
 
 Entries are sorted by lexicographic comparison of the six `uint16_t` values in
 `cp[0..5]`. `cp[0]` is the most significant key. Zero slots sort before any
 codepoint value.
 
-### Binary Search
+### Binary search
 
 The MCU compares `uint32_t` segmenter keys against `uint16_t` file entries per slot.
 A match requires all six slots to be equal. ~13 read steps for 7000 clusters.
 
 ---
 
-## Composition Table
+## Composition table
 
 At `comp_offset`. Each cluster points into this table via `aks_key_entry_t.comp_off`.
 
-### Composition Block
+### Composition block
 
 ```c
 typedef struct __attribute__((packed)) {
@@ -153,7 +153,7 @@ typedef struct __attribute__((packed)) {
 } aks_comp_hdr_t;             // 2 bytes, followed by glyph_count × aks_comp_entry_t
 ```
 
-### Composition Entry
+### Composition entry
 
 ```c
 typedef struct __attribute__((packed)) {
@@ -169,7 +169,7 @@ Positions are in font design units. The MCU scales to pixels at render time:
 
 ---
 
-## Size Directory
+## Size directory
 
 At `sizes_offset`. Array of `size_count` entries, one per size+weight variant.
 Regular and Bold at the same pixel size are separate entries but share the cluster
@@ -194,7 +194,7 @@ typedef struct __attribute__((packed)) {
 
 ---
 
-## Glyph Metrics
+## Glyph metrics
 
 At `metrics_offset` within each size entry. Array of `glyph_count` entries.
 
@@ -209,7 +209,7 @@ typedef struct __attribute__((packed)) {
 
 ---
 
-## Bitmap Store
+## Bitmap store
 
 At `bitmaps_offset` within each size entry. Glyph offsets in the store are at
 `offsets_offset` (array of `uint32_t[glyph_count]`).
@@ -226,7 +226,7 @@ No padding between bitmaps.
 
 ---
 
-## Error Codes
+## Error codes
 
 ```c
 #define AKS_OK                  0
@@ -242,7 +242,7 @@ No padding between bitmaps.
 
 ---
 
-## File Generation
+## File generation
 
 `.aks` files are produced by `akshara-generator/packer.py`. Pass `--sizes` for
 multi-size output and `--font-bold` to embed a Bold variant.
